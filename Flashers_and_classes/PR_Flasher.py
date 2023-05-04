@@ -40,8 +40,8 @@ def func_opt(parametrs):  # Функция оптимизации средней
                     [k13, k23, 0]]
 
             eos_kwargs = {'Pcs': constants2.Pcs, 'Tcs': constants2.Tcs, 'omegas': constants2.omegas, 'kijs': kijs}
-            gas = CEOSGas(SRKMIX, eos_kwargs=eos_kwargs)
-            liquid = CEOSLiquid(SRKMIX, eos_kwargs=eos_kwargs)
+            gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs)
+            liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs)
             flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
