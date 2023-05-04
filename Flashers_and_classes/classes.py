@@ -78,10 +78,10 @@ Fraction_R22_values = read_data_from_file_lines('../data/fraction_r22.txt')
 Fraction_R115_values = read_data_from_file_lines('../data/fraction_r115.txt')
 
 # Свойства Oil (Молярная масса масла, температура (Кельвины), давление (Па), константа омега)
-oil_PRMIX = Oil(400.0, 500, 950e3, 0.8)
+oil_PRMIX = Oil(400.0, 800, 950e3, 0.8)
 
 # Свойства Oil (Молярная масса масла, температура (Кельвины), давление (Па), константа омега)
-oil_SRKMIX = Oil(400.0, 500, 950e3, 0.2)
+oil_SRKMIX = Oil(400.0, 800, 950e3, 0.2)
 
 # Создание констант и экземпляров классов
 IDs = ['r-22', 'chloropentafluoroethane', 'water']
