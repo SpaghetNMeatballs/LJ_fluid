@@ -82,7 +82,7 @@ class SRKMIX_vdW2_mixing_rule(SRKMIX):
 
 '''
     def bij(self, i, j):
-        lij = self.kijs[i][j]
+        lij = self.lijs[i][j]
         return (self.bs[i] + self.bs[j]) / 2 * (1 - lij)
 
 
