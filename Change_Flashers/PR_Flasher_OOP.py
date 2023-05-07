@@ -66,8 +66,8 @@ for i in range(len(temperature.values)):
         ABS_error_R22 = abs(Fraction_R22.values[i][j] - flash_data[0][0])
         ABS_error_R115 = abs(Fraction_R115.values[i][j] - flash_data[0][1])
 
-        Rel_error_R22 = flash_data[0][0] / ABS_error_R22
-        Rel_error_R115 = flash_data[0][1] / ABS_error_R115
+        Rel_error_R22 = ABS_error_R22 / Fraction_R22.values[i][j]
+        Rel_error_R115 = ABS_error_R115 / Fraction_R115.values[i][j]
 
         # Счетчик точек
         count += 1
