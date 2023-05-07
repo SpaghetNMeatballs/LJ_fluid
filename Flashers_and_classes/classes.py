@@ -59,6 +59,7 @@ class Density(PhysicalProperty):
 class Fraction(PhysicalProperty):
     pass
 
+
 # Параметры: массив температур
 T = read_data_from_file_lines('../data/temperature.txt')
 

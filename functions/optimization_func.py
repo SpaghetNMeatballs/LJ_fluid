@@ -48,6 +48,7 @@ def func_opt(parametrs, class_flash, properties, constants):
     # Средняя ошибка
     Avg_error_R22 = sum_R22 / count
     Avg_error_R115 = sum_R115 / count
+
     return Avg_error_R115 + Avg_error_R22
 
 
