@@ -5,9 +5,7 @@
 
 import matplotlib.pyplot as plt
 from thermo import PRMIX
-from scipy.optimize import minimize
-from functions.optimization_func import func_opt, calculate_flash
-from Flashers_and_classes.classes import temperature, pressure, Fraction_R115, Fraction_R22, chemical_constants_PR, properties_PR
+from Flashers_and_classes.classes import FlashCalculator, temperature, pressure, Fraction_R115, Fraction_R22, chemical_constants_PR, properties_PR
 
 
 # Соотношение R-22 к R-115
@@ -18,11 +16,8 @@ zs = [0.488 * g, 0.512 * g, 1 - g]
 # ================= Оптимизация коэффициентов =================
 # Оптимизируемые коэффициенты для R-22 и R-115
 initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
-result = minimize(func_opt, initial_guess_k13_k23, args=(PRMIX, properties_PR, chemical_constants_PR), bounds=((-1, 1), (0, 0.004), (-1, 1), (0, 0.004), (-1, 1), (0, 0.004)))
-if result.success:
-    print(result.message)
-else:
-    raise ValueError(result.message)
+flash_calculator = FlashCalculator(PRMIX, properties_PR, chemical_constants_PR)
+result = flash_calculator.optimize_parameters(initial_guess_k13_k23, Fraction_R22, Fraction_R115, temperature, pressure, zs)
 
 # Счетчик точек и суммы концентраций
 count = 0
@@ -43,7 +38,7 @@ for i in range(len(temperature.values)):
     Fraction_R115_plot = []
     for j in range(len(pressure.values[i])):
         # Вызов функции для получения мольных долей, температуры и давления
-        flash_data = calculate_flash(temperature.values, pressure.values, zs, i, j, result, PRMIX, chemical_constants_PR, properties_PR)
+        flash_data = flash_calculator.calculate_flash(temperature.values, pressure.values, zs, i, j, result, PRMIX, chemical_constants_PR, properties_PR)
         if flash_data[3] == 1:
             print('================ПРИСУТСТВУЕТ ТОЛЬКО ПАР================')
             print('Температура расчета:', temperature.values[i], '°C\n')

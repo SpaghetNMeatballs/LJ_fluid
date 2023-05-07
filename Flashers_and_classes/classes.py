@@ -49,7 +49,7 @@ class FlashCalculator:
             print(result.message)
         else:
             raise ValueError(result.message)
-        return result.x
+        return result
 
     def calculate_flash(self, T, P, fractions, i, j, result, class_flash, constants, properties):
         k13 = result.x[0] + (T[i] - T[0]) * result.x[1]
