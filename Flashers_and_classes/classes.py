@@ -92,6 +92,7 @@ class ChemicalConstants:
         )
         return constants2
 
+
 class Oil:
     def __init__(self, M_oil, T_oil, P_oil, Omega_oil):
         self.M_oil = M_oil
