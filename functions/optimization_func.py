@@ -36,10 +36,14 @@ def func_opt(parametrs, class_flash, properties, constants):
                 ABS_error_R22 = abs(Fraction_R22.values[i][j] - PT.liquid0.zs[0])
                 ABS_error_R115 = abs(Fraction_R115.values[i][j] - PT.liquid0.zs[1])
 
-                # Счетчик точек
-                count += 1
-                sum_R22 += ABS_error_R22
-                sum_R115 += ABS_error_R115
+            else:
+                ABS_error_R22 = abs(Fraction_R22[i][j] - 0.0)
+                ABS_error_R115 = abs(Fraction_R115[i][j] - 0.0)
+
+            # Счетчик точек
+            count += 1
+            sum_R22 += ABS_error_R22
+            sum_R115 += ABS_error_R115
 
     # Средняя ошибка
     Avg_error_R22 = sum_R22 / count
