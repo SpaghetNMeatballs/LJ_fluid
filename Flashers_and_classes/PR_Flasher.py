@@ -40,8 +40,8 @@ def func_opt(parametrs):  # Функция оптимизации средней
                     [k13, k23, 0]]
 
             eos_kwargs = {'Pcs': constants2.Pcs, 'Tcs': constants2.Tcs, 'omegas': constants2.omegas, 'kijs': kijs}
-            gas = CEOSGas(SRKMIX, eos_kwargs=eos_kwargs)
-            liquid = CEOSLiquid(SRKMIX, eos_kwargs=eos_kwargs)
+            gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs)
+            liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs)
             flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
@@ -159,7 +159,6 @@ for i in range(len(T)):
         else:  # Не только пар
             errorR22 = PT.liquid0.zs[0]
             errorR115 = PT.liquid0.zs[1]
-
             print('==============================================================================')
             print('Температура расчета:', T[i], '°C; Давление расчета:', P_bar[i][j], 'Бар')
             print('Соотношение компонентов смеси R-22, R-115, ISO 32:', PT.liquid0.zs)

@@ -4,98 +4,13 @@
 # Построить зависимость концентрации от давления
 
 import matplotlib.pyplot as plt
-
 from thermo import SRKMIX
 from Flashers_and_classes.classes import FlashCalculator, temperature, pressure, Fraction_R115, Fraction_R22, chemical_constants_SR, properties_SR
-
 
 
 # Соотношение R-22 к R-115
 # Общее соотношения газа к маслу с учетом распределительного коэффициента
 g = 0.8
-zs = [0.488 * g, 0.512 * g, 1 - g]
-
-class Oil:
-    def __init__(self, M_oil, T_oil, P_oil, Omega_oil):
-        self.M_oil = M_oil
-        self.T_oil = T_oil
-        self.P_oil = P_oil
-        self.Omega_oil = Omega_oil
-
-
-class PhysicalProperty:
-    def __init__(self, values):
-        self.values = values
-
-    def __len__(self):
-        return len(self.values)
-
-    def __iter__(self):
-        return iter(self.values)
-
-
-class Temperature(PhysicalProperty):
-    pass
-
-
-class Pressure(PhysicalProperty):
-    pass
-
-
-class Viscosity(PhysicalProperty):
-    pass
-
-
-class Density(PhysicalProperty):
-    pass
-
-
-class Fraction(PhysicalProperty):
-    pass
-
-
-# Параметры: массив температур
-T = read_data_from_file_lines('../data/temperature.txt')
-
-# Давление R-22: от -10 градусов до 125
-pressure_values = read_data_from_file_lines('../data/pressure.txt')
-
-# Вязкость R-22: от -10 градусов до 125
-viscosity_values = read_data_from_file_lines('../data/viscosity.txt')
-
-# Плотность R-22:
-density_values = read_data_from_file_lines('../data/density.txt')
-
-# Доли R-22 в жидкой фазе
-Fraction_R22_values = read_data_from_file_lines('../data/fraction_r22.txt')
-
-# Доли R-115 в жидкой фазе
-Fraction_R115_values = read_data_from_file_lines('../data/fraction_r115.txt')
-
-# R-22, R-115, Oil (Iso32)
-constants, properties = ChemicalConstantsPackage.from_IDs(['r-22', 'chloropentafluoroethane', 'water'])
-
-# Критические параметры масла:
-M_oil = 400.0  # Молярная масса масла
-T_oil = 800  # Кельвины
-P_oil = 950e3  # Па
-Omega_oil = 0.2  # Константа омега
-
-# Перезаписали критические параметры для воды под масло ISO 32
-constants2 = ChemicalConstantsPackage(MWs=constants.MWs[:-1] + [M_oil], names=constants.names[:-1] + ['ISO 32'],
-                                      omegas=constants.omegas[:-1] + [Omega_oil], Pcs=constants.Pcs[:-1] + [P_oil],
-                                      Tcs=constants.Tcs[:-1] + [T_oil])
-
-temperature = Temperature(T)
-pressure = Pressure(pressure_values)
-viscosity = Viscosity(viscosity_values)
-density = Density(density_values)
-Fraction_R22 = Fraction(Fraction_R22_values)
-Fraction_R115 = Fraction(Fraction_R115_values)
-
-# Общее соотношения газа к маслу (распределительный коэффициент)
-g = 0.8
-# Соотношение R-22 к R-115 с маслом
 zs = [0.488 * g, 0.512 * g, 1 - g]
 
 # ================= Оптимизация коэффициентов =================
@@ -157,7 +72,6 @@ if __name__ == "__main__":
             # Счетчик точек
             count += 1
             countT += 1
-
             sum_R22T += ABS_error_R22
             sum_R115T += ABS_error_R115
 
@@ -204,4 +118,3 @@ if __name__ == "__main__":
     print('****** Средняя погрешность ******')
     print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22*100, 2), '%'', \n')
     print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115*100, 2), '%', '\n')
-

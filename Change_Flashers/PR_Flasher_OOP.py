@@ -4,9 +4,9 @@
 # Построить зависимость концентрации от давления
 
 import matplotlib.pyplot as plt
-
 from thermo import PRMIX
 from Flashers_and_classes.classes import FlashCalculator, temperature, pressure, Fraction_R115, Fraction_R22, chemical_constants_PR, properties_PR
+
 
 # Соотношение R-22 к R-115
 # Общее соотношения газа к маслу с учетом распределительного коэффициента
@@ -69,7 +69,6 @@ if __name__ == "__main__":
             Rel_error_R22 = ABS_error_R22 / Fraction_R22.values[i][j]
             Rel_error_R115 = ABS_error_R115 / Fraction_R115.values[i][j]
 
-
             # Счетчик точек
             count += 1
             countT +=1
@@ -115,4 +114,3 @@ if __name__ == "__main__":
     print('****** Средняя погрешность ******')
     print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22*100, 2), '%'', \n')
     print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115*100, 2), '%', '\n')
-
