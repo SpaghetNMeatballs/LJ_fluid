@@ -1,27 +1,22 @@
-from common import aad
+from common import aad, load_from_directory
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-from os import listdir
 from numpy import arange
 
 
 class Density:
-    def __init__(self, rho0, t0, p0):
+    def __init__(self, rho0: float, t0: float, p0: float):
         self.rho0 = rho0
         self.t0 = t0
         self.p0 = p0
         self.beta = 0
         self.e = 10
 
-    def calc_rho1(self, t, beta=None):
-        if not beta:
-            beta = self.beta
-        return self.rho0 / (1 + beta * (t - self.t0))
+    def calc_rho1(self, params, t):
+        return self.rho0 / (1 + params * (t - self.t0))
 
-    def calc_rho2(self, p, e=None):
-        if not e:
-            e = self.e
-        return self.rho0 / (1 - (p - self.p0) / e)
+    def calc_rho2(self, params, p):
+        return self.rho0 / (1 - (p - self.p0) / params)
 
     def calc_rho_full(self, p, t, e=None, beta=None):
         if not e:
@@ -68,16 +63,8 @@ class Density:
 
 
 if __name__ == "__main__":
-    rho = {}
     substance = "R22"
-    for file in listdir(substance):
-        with open(substance + "\\" + file, "r") as f:
-            text = f.read()
-            p = float(file[:-4])
-            rho[p] = {}
-            for line in text.split('\n'):
-                cur_line = line.split(' ')
-                rho[p][float(cur_line[0])] = float(cur_line[2])
+    rho = load_from_directory(substance, 2)
     p = list(rho.keys())
     graph_numb = [0, 0]
     p0 = 0.05
@@ -91,19 +78,28 @@ if __name__ == "__main__":
     test.setup_rho_full(rho)
     fig, ax = plt.subplots(2, 4)
 
-    t_exp = list(rho[p0].keys())
-    t_calc = arange(t_exp[0], t_exp[-1], 0.5)
+    ax[0][0].plot(p, [test.calc_rho_full(i, t0) for i in p], "r", label="Расчётные значения")
+    ax[0][0].scatter(x=p, y=[rho[i][t0] for i in p], label="Экспериментальные данные")
+    ax[0][0].set_ylim([1515, 1520])
+    ax[0][0].set_ylabel("Rho, м3/кг")
+    ax[0][0].set_xlabel("T, Гр. Цельсия")
+    ax[0][0].set_title("rho = f(p)")
+    ax[0][0].legend()
+    print(f"expected: {[rho[i][t0] for i in p]}")
+    print(f"calculated: {[test.calc_rho_full(i, t0) for i in p]}")
     for i in range(len(p)):
         p_cur = p[i]
         graphy = (i + 1) // 4
         graphx = (i + 1) % 4
         exp_temps = list(rho[p_cur].keys())
-        t_arr = arange(exp_temps[0], exp_temps[-1], 0.5)
-        ax[graphy][graphx].plot(t_arr, [test.calc_rho_full(p_cur, j) for j in t_arr], "r", label="Calculated")
-        ax[graphy][graphx].plot(exp_temps, list(rho[p_cur].values()), "b", label="Expected")
-        ax[graphy][graphx].set_title("P = %f" % p_cur)
+        t_arr = arange(exp_temps[0], exp_temps[-1]+0.5, 0.5)
+        ax[graphy][graphx].plot(t_arr, [test.calc_rho_full(p_cur, j) for j in t_arr], "r", label="Расчётные значения")
+        ax[graphy][graphx].scatter(x=exp_temps, y=list(rho[p_cur].values()), label="Экспериментальные данные")
+        ax[graphy][graphx].set_title("p = %.2f MPa" % p_cur)
+        ax[graphy][graphx].set_ylabel("Rho, м3/кг")
+        ax[graphy][graphx].set_xlabel("P, МПа")
+        ax[graphy][graphx].legend()
     print("Beta = %f" % test.beta)
     print("E = %f" % test.e)
     print(test.aad_rho2(test.e, p, rho_p))
-    plt.legend()
     plt.show()
