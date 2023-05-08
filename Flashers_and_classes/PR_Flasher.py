@@ -177,8 +177,8 @@ for i in range(len(T)):
 
         if hasattr(PT, 'liquid0'):
             # Относительные ошибки
-            Rel_error_R22 = ABS_error_R22 / errorR22
-            Rel_error_R115 = ABS_error_R115 / errorR115
+            Rel_error_R22 = ABS_error_R22 / Fraction_R22
+            Rel_error_R115 = ABS_error_R115 / Fraction_R115
         else:
             Rel_error_R22 = 0
             Rel_error_R115 = 0
