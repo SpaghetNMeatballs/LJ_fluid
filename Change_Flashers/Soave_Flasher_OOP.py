@@ -78,10 +78,6 @@ if __name__ == "__main__":
             sum_R22 += ABS_error_R22
             sum_R115 += ABS_error_R115
 
-            print('Температура расчета:', temperature.values[i], '°C\n')
-            print('Давление расчета:', pressure.values[i][j], 'Бар\n')
-            print('Соотношение компонентов смеси R-22, R-115, ISO 32:\n', flash_data[0], '\n')
-            print('Пар:', flash_data[3], '\n')
             print('****** Абсолютная погрешность ******\n')
             print('Погрешность для R-22:', ABS_error_R22, '\n')
             print('Погрешность для R-115:', ABS_error_R115, '\n')

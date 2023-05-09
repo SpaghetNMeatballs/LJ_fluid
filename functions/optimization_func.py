@@ -72,3 +72,4 @@ def calculate_flash(T, P, fractions, i, j, result, class_flash, constants, prope
         return [PT.gas.zs, T, P, PT.VF, k12, k13, k23]
     else:  # Не только пар
         return [PT.liquid0.zs, T, P, PT.VF, k12, k13, k23]
+

@@ -4,6 +4,12 @@ from scipy.optimize import minimize
 from thermo import CEOSGas, CEOSLiquid, FlashVL
 
 
+def reverse_rows(lst):
+    for i in range(len(lst)):
+        lst[i] = lst[i][::-1]
+    return lst
+
+
 class FlashCalculator:
     def __init__(self, class_flash, properties, constants):
         self.class_flash = class_flash
@@ -136,19 +142,19 @@ class Fraction(PhysicalProperty):
 T = read_data_from_file_lines('../data/temperature.txt')
 
 # Давление R-22: от -10 градусов до 125
-pressure_values = read_data_from_file_lines('../data/pressure.txt')
+pressure_values = reverse_rows(read_data_from_file_lines('../data/pressure.txt'))
 
 # Вязкость R-22: от -10 градусов до 125
-viscosity_values = read_data_from_file_lines('../data/viscosity.txt')
+viscosity_values = reverse_rows(read_data_from_file_lines('../data/viscosity.txt'))
 
 # Плотность R-22:
-density_values = read_data_from_file_lines('../data/density.txt')
+density_values = reverse_rows(read_data_from_file_lines('../data/density.txt'))
 
 # Доли R-22 в жидкой фазе
-Fraction_R22_values = read_data_from_file_lines('../data/fraction_r22.txt')
+Fraction_R22_values = reverse_rows(read_data_from_file_lines('../data/fraction_r22.txt'))
 
 # Доли R-115 в жидкой фазе
-Fraction_R115_values = read_data_from_file_lines('../data/fraction_r115.txt')
+Fraction_R115_values = reverse_rows(read_data_from_file_lines('../data/fraction_r115.txt'))
 
 # Свойства Oil (Молярная масса масла, температура (Кельвины), давление (Па), константа омега)
 oil_PRMIX = Oil(400.0, 800, 950e3, 0.8)
