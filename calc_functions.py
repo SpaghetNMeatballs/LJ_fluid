@@ -20,10 +20,10 @@ def HG(params: list[float], static_params: list[float], point: list[float]):
 
 
 # Params = d, Static_Params = x, point = mu
-def grunberg_nissan(params: list[list[float]], static_params: list[float], point: list[float]):
-    d = params
-    x = static_params
-    mu = point
+def grunberg_nissan(params: list[float], point: list[float]):
+    d = [params[:2], params[2:]]
+    x = point[2:]
+    mu = point[:2]
     visc_sum = sum([x[i] * log(mu[i]) for i in range(2)])
     param_sum = sum([sum([x[i] * x[j] * d[i][j]] for j in range(2)) for i in range(2)])
     return visc_sum + param_sum
