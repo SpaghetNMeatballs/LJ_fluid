@@ -75,9 +75,9 @@ class FlashCalculator:
         PT = flasher.flash(T=t[t_ind] + 273.15, P=p[t_ind][p_ind] * pow(10, 5), zs=fractions)
 
         if PT.VF == 1:  # Есть только пар
-            return [PT.gas.zs, t, p, PT.VF, k12, k13, k23]
+            return [PT.gas.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12, k13, k23]
         else:  # Не только пар
-            return [PT.liquid0.zs, t, p, PT.VF, k12, k13, k23]
+            return [PT.liquid0.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12, k13, k23]
 
 
 @dataclass
