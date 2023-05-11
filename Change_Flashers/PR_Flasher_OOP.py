@@ -3,6 +3,7 @@
 # R-22/R-115 (48.8/51.2) ------> (0.488/0.512)
 # Построить зависимость концентрации от давления
 
+import math
 import matplotlib.pyplot as plt
 from thermo import PRMIX
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
@@ -18,8 +19,23 @@ if __name__ == "__main__":
     P = read_data_from_file_lines('pressure.txt')
     fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
     Fraction_R22, Fraction_R115 = fractions
+
     IDs = ['r-22', 'chloropentafluoroethane', 'water']
-    oil_PRMIX = Oil(400.0, 800, 950e3, 0.8)
+    # Критические параметры масла:
+    M_oil = 400.0  # Молярная масса масла
+    T_oil = 800  # Кельвины
+    P_oil = 950e3  # Па
+
+    # Расчет ацентрического фактора по корреляции Ли и Кесслера
+    T_r = T_oil / 647.3
+    P_r = P_oil / 220.6e5
+
+    a = -0.2127 * T_r + 0.2733 * (T_r ** 2) + 1.466 * P_r - 0.4686 * P_r * T_r - 0.691 * (P_r ** 2)
+    b = 0.2607 * T_r - 1.278 * (T_r ** 2) + 0.9375 * P_r + 1.01 * P_r * T_r - 0.9479 * (P_r ** 2)
+    c = 0.01354 * T_r + 0.06052 * (T_r ** 2) - 0.04536 * P_r - 0.015 * P_r * T_r + 0.3557 * (P_r ** 2)
+    omega = math.exp(a + b * M_oil ** (1 / 3) + c * M_oil ** (2 / 3))
+    print(omega)
+    oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega)
     chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
 
     # ================= Оптимизация коэффициентов =================
