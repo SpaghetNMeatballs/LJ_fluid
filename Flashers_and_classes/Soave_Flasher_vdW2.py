@@ -110,11 +110,10 @@ def func_opt(parametrs):
             flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
+            calculated=[0, 0]
             if PT.VF == 1:  # Есть только пар
                 print(PT.gas.zs)
                 print('Неудача')
-                calculated[0]=0.0
-                calculated[1]=0.0
             else:  # Не только пар
                 calculated[0]=PT.liquid0.zs[0]
                 calculated[1]=PT.liquid0.zs[1]
@@ -184,11 +183,10 @@ for i in range(len(T)):
         flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
         PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
+        calculated=[0, 0]
         if PT.VF == 1:  # Есть только пар
             print(PT.gas.zs)
             print('Неудача')
-            calculated[0]=0.0
-            calculated[1]=0.0
         else:  # Не только пар
             calculated[0]=PT.liquid0.zs[0]
             calculated[1]=PT.liquid0.zs[1]
