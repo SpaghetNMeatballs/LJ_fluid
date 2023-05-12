@@ -77,6 +77,7 @@ class FlashCalculator:
         if PT.VF == 1:  # Есть только пар
             return [PT.gas.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12, k13, k23]
         else:  # Не только пар
+            # Возвращаем лист мольных долей в порядке: R-22, R-115, ISO 32
             return [PT.liquid0.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12, k13, k23]
 
 
