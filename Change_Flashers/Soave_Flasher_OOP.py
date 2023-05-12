@@ -34,7 +34,7 @@ if __name__ == "__main__":
     b = 0.2607 * T_r - 1.278 * (T_r ** 2) + 0.9375 * P_r + 1.01 * P_r * T_r - 0.9479 * (P_r ** 2)
     c = 0.01354 * T_r + 0.06052 * (T_r ** 2) - 0.04536 * P_r - 0.015 * P_r * T_r + 0.3557 * (P_r ** 2)
     omega = math.exp(a + b * M_oil ** (1 / 3) + c * M_oil ** (2 / 3))
-    print(omega)
+    "print(omega)"
     oil_SRKMIX = Oil(M_oil, T_oil, P_oil, omega)
     chemical_constants_SR = create_constants_package(oil_SRKMIX, IDs)
 
