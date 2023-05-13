@@ -2,7 +2,7 @@ from common import ViscData, aad_new
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from numpy import arange, array
-from calc_functions import DEF, HG, grunberg_nissan
+from calc_functions import DEF, HG, grunberg_nissan, lederer_roegiers
 
 
 class VFT:
@@ -47,6 +47,15 @@ class VFT:
 
     def calc_visc(self, t: float, p: float) -> float:
         return HG(self.params[3:], self.params[:3] + [self.pref], [p, t])
+
+
+class Lederer_Roegiers:
+    def __init__(self, points: list[list[float]]):
+        self.params = [0]
+        self.points = points
+
+    def setup(self) -> bool:
+        args = (lederer_roegiers, self.points)
 
 
 class MuMix2:
