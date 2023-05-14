@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from thermo import PRMIX
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
 from functions.read_func import read_data_from_file_lines
+from thermo.chemical import Chemical
 
 if __name__ == "__main__":
 
@@ -21,6 +22,14 @@ if __name__ == "__main__":
     Fraction_R22, Fraction_R115 = fractions
 
     IDs = ['r-22', 'chloropentafluoroethane', 'water']
+
+    # Молярная масса хладагента R-22
+    r22 = Chemical(IDs[0])
+    M_r22 = round(r22.MW, 2)  # 86.47
+
+    # Молярная масса хладагента R-115
+    r115 = Chemical(IDs[1])
+    M_r115 = round(r115.MW, 2)  # 154.47
     # Критические параметры масла:
     M_oil = 400.0  # Молярная масса масла
     T_oil = 800  # Кельвины
