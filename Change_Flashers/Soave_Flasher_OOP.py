@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from thermo import SRKMIX
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
 from functions.read_func import read_data_from_file_lines
+from thermo.chemical import Chemical
+import numpy as np
 
 if __name__ == "__main__":
 
@@ -20,6 +22,14 @@ if __name__ == "__main__":
     fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
     Fraction_R22, Fraction_R115 = fractions
     IDs = ['r-22', 'chloropentafluoroethane', 'water']
+
+    # Молярная масса хладагента R-22
+    r22 = Chemical(IDs[0])
+    M_r22 = round(r22.MW, 2) #86.47
+
+    # Молярная масса хладагента R-115
+    r115 = Chemical(IDs[1])
+    M_r115 = round(r115.MW, 2) #154.47
 
     # Критические параметры масла:
     M_oil = 400.0  # Молярная масса масла
@@ -34,7 +44,7 @@ if __name__ == "__main__":
     b = 0.2607 * T_r - 1.278 * (T_r ** 2) + 0.9375 * P_r + 1.01 * P_r * T_r - 0.9479 * (P_r ** 2)
     c = 0.01354 * T_r + 0.06052 * (T_r ** 2) - 0.04536 * P_r - 0.015 * P_r * T_r + 0.3557 * (P_r ** 2)
     omega = math.exp(a + b * M_oil ** (1 / 3) + c * M_oil ** (2 / 3))
-    "print(omega)"
+
     oil_SRKMIX = Oil(M_oil, T_oil, P_oil, omega)
     chemical_constants_SR = create_constants_package(oil_SRKMIX, IDs)
 
@@ -147,3 +157,4 @@ if __name__ == "__main__":
         print('****** Средняя погрешность ******')
         print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22 * 100, 2), '%'', \n')
         print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115 * 100, 2), '%', '\n')
+  
