@@ -15,6 +15,7 @@ class VFT:
         visc_pref = list(self.mu_data[self.pref].values())
         temps = list(self.mu_data[self.pref].keys())
 
+
         # Выбираем начальное приближение на основе характера экспериментальных данных
         x0 = [0.010124325475473392, 498.84631096931736, 372.92721289829717]
         if visc_pref[0] < visc_pref[-1]:
@@ -26,6 +27,7 @@ class VFT:
         return minimized.success
 
     def setup_hg(self) -> bool:
+
         points = []
         exp_visc = []
         p_arr = list(self.mu_data.keys())
@@ -47,6 +49,7 @@ class VFT:
 
     def calc_visc(self, t: float, p: float) -> float:
         return HG(self.params[3:], self.params[:3] + [self.pref], [p, t])
+
 
 
 class Lederer_Roegiers:
@@ -79,6 +82,7 @@ class MuMix2:
         return grunberg_nissan(self.params, mu + x)
 
 
+
 def main_visc_check():
     substance = "R115"
     data = ViscData(substance)
@@ -96,6 +100,7 @@ def main_visc_check():
     fig, ax = plt.subplots()
     ax.scatter(temps, viscs, label="Экспериментальные данные")
     viscs_calc = [test.calc_visc(i, pref) for i in arange(temps[0], temps[-1] + 1)]
+
     viscs_temp = [test.calc_visc_def(i) for i in arange(temps[0], temps[-1] + 1)]
     ax.plot(arange(temps[0], temps[-1] + 1), viscs_calc, "r",
             label="Расчётные значения")

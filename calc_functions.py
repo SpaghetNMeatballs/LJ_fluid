@@ -1,14 +1,15 @@
 from math import exp, log
 
 
-# params = [D, E, F], point = t
-def DEF(params: list[float], point: float):
+# Params = [D, E, F], point = t
+def DEF(params: list[float], point: float) -> float:
     d, e, f = params
     return d * exp(e / (point + 273.15 - f))
 
 
-# params = [G0, G1, G2, H], static_params = все для DEF и pref, point = [p, t]
-def HG(params: list[float], static_params: list[float], point: list[float]):
+
+# Params = [G0, G1, G2, H], Static_Params = все для DEF и pref, point = [p, t]
+def HG(params: list[float], static_params: list[float], point: list[float]) -> float:
     g0, g1, g2, h = params
     d, e, f, pref = static_params
     p, t = point
@@ -55,3 +56,24 @@ def lederer_roegiers(params: list[float], static_params: list[float], point: lis
     x1, x2 = static_params
     mu1, mu2 = point
     return exp((x1 * log(mu1) + alpha * x2 * log(mu2)) / (x1 + alpha * x2))
+
+
+def rho_t(params: float, static_params: list[float], point: float) -> float:
+    e = params
+    rho0, t0 = static_params
+    t = point
+    return rho0 / (1 + e * (t - t0))
+
+
+def rho_p(params: float, static_params: list[float], point: float) -> float:
+    beta = params
+    rho0, p0 = static_params
+    p = point
+    return rho0 / (1 - (p - p0) / beta)
+
+
+def rho_full(params: list[float], static_params: list[float], point: list[float]) -> float:
+    e, beta = params
+    rho0, p0, t0 = static_params
+    p, t = point
+    return (rho0 / (1 + beta * (t - t0))) / (1 - (p - p0) / e)
