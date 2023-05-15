@@ -36,6 +36,7 @@ class ViscData:
         t_arr = list(t_val_dict.keys())
         return [[p, t, t_val_dict[t]] for t in t_arr]
 
+
     def get_middle_point(self, dict_index: int) -> list[float]:
         if not 0 <= dict_index <= 2:
             raise KeyError(f'{dict_index} not in range 0-2')
@@ -54,6 +55,7 @@ class ViscData:
 
         result = []
         for p in self.p:
+
             t_val_dict = [self.density, self.visc_k, self.visc_d][dict_index][p]
             t_arr = list(t_val_dict.keys())
             result += [[p, t, t_val_dict[t]] for t in t_arr]
@@ -74,16 +76,10 @@ def aad_new(params: list[float], func: callable, points: list, exp: list[float],
     if len(points) != len(exp):
         raise ValueError(f"Input lists have different shapes: {len(points)} and {len(exp)}")
     result = 0
-    calc = []
     for i in range(len(points)):
-        if static_params is None:
-            calc.append(func(params, points[i]))
-
+        if static_params:
+            result += abs((func(params, static_params, points[i]) - exp[i]) / exp[i])
         else:
-            calc.append(func(params, static_params, points[i]))
-
-    for i in range(len(points)):
-        result += abs((exp[i] - calc[i]) / exp[i])
-
+            result += abs((func(params, points[i]) - exp[i]) / exp[i])
     result *= 100 / len(points)
     return result

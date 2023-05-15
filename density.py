@@ -6,11 +6,13 @@ from numpy import arange
 
 
 class Density:
+
     def __init__(self, rho0: float, point0: list[float]):
         self.rho0 = rho0
         self.p0, self.t0 = point0
         self.beta = 0
         self.e = 3
+
 
     def calc_rho_t(self, t: float) -> float:
         return rho_t(self.beta, [self.rho0, self.t0], t)
@@ -48,6 +50,7 @@ class Density:
 
 if __name__ == "__main__":
     substance = "R22"
+
     substance_data = ViscData(substance)
     points_to_process = substance_data.get_all_points(0)
     rho = [i[2] for i in points_to_process]
