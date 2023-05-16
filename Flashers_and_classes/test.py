@@ -3,7 +3,6 @@
 # R-22/R-115 (48.8/51.2) ------> (0.488/0.512)
 # Построить зависимость концентрации от давления
 
-import math
 import matplotlib.pyplot as plt
 from thermo import SRKMIX
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
