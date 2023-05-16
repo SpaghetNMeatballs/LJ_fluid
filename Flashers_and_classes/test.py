@@ -56,7 +56,8 @@ if __name__ == "__main__":
     # Оптимизируемые коэффициенты для R-22 и R-115
     initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
     flash_calculator = FlashCalculator(SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23)
-    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115], T, P, zs_mole)
+    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115],
+                                                  T, P, zs_mole)
 
     # Счетчик точек и суммы концентраций
     count = 0
@@ -66,7 +67,8 @@ if __name__ == "__main__":
     # Открываем файл для записи результатов
     with open('results_SRK.txt', 'w', encoding='utf-8') as file:
         # Записываем заголовки в файл
-        file.write('Т(°C)\tP(кПа)\t\tω(м.д) R-22\t\tω(м.д) R-115\tω(м.д) ISO 32\n')
+        file.write('Т(°C)\tP(кПа)\t\tx_R-22(модел.)\t\tх_R-115(модел.)\t\tх_ISO 32(модел.)'
+                   '\t\tx_R-22(эксп.)\t\tx_R-115(эксп.)\t\tx_ISO 32(эксп.)\n')
 
         # Цикл расчета вспышки и ошибок
         for i in range(len(T)):
@@ -82,8 +84,9 @@ if __name__ == "__main__":
             for j in range(len(P[i])):
                 # Вызов функции для получения мольных долей, температуры и давления
                 flash_data = flash_calculator.calculate_flash(T, P, zs_mole, i, j)
-                file.write('%g\t\t%g\t\t\t%.4f\t\t\t%.4f\t\t\t%.4f\n' % (
-                T[i], P[i][j], float(flash_data[0][0]), float(flash_data[0][1]), float(flash_data[0][2])))
+                file.write('%g\t\t%g\t\t\t%.4f\t\t\t\t%.4f\t\t\t\t%.4f\t\t\t\t%.4f\t\t\t\t%.4f\t\t\t\t%.4f\n' % (
+                T[i], P[i][j], float(flash_data[0][0]), float(flash_data[0][1]), float(flash_data[0][2]),
+                           mole_fractions_r22[i][j], mole_fractions_r115[i][j], mole_fractions_oil[i][j]))
                 if flash_data[3] == 1:
                     print('================ПРИСУТСТВУЕТ ТОЛЬКО ПАР================')
                     print('Температура расчета:', T[i], '°C\n')
