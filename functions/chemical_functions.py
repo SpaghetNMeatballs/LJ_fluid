@@ -1,37 +1,45 @@
 import math
 
 
+# Функция перевода из массовых долей в мольные доли для двух/трехкомпонентной системы с маслом
 def mass_fractions_to_mole_fractions(Fraction_1, Fraction_2, M_1, M_2, M_oil):
-    mole_fractions_r22 = []
-    mole_fractions_r115 = []
+    mole_fractions_1 = []
+    mole_fractions_2 = []
     mole_fractions_oil = []
 
     for i in range(len(Fraction_1)):
-        mole_fractions_row_r22 = []
-        mole_fractions_row_r115 = []
+        mole_fractions_row_1 = []
+        mole_fractions_row_2 = []
         mole_fractions_row_oil = []
 
         for j in range(len(Fraction_1[i])):
-            fraction_r22 = Fraction_1[i][j]
-            fraction_r115 = Fraction_2[i][j]
+            fraction_1 = Fraction_1[i][j]
 
-            fraction_oil = 1 - (fraction_r22 + fraction_r115)
+            if Fraction_2:
+                fraction_2 = Fraction_2[i][j]
+            else:
+                fraction_2 = 0
 
-            n_r22 = fraction_r22 / M_1
-            n_r115 = fraction_r115 / M_2
+            fraction_oil = 1 - (fraction_1 + fraction_2)
+
+            n_1 = fraction_1 / M_1
+            n_2 = fraction_2 / M_2
             n_oil = fraction_oil / M_oil
 
-            total_moles = n_r22 + n_r115 + n_oil
+            total_moles = n_1 + n_2 + n_oil
 
-            mole_fractions_row_r22.append(n_r22 / total_moles)
-            mole_fractions_row_r115.append(n_r115 / total_moles)
+            mole_fractions_row_1.append(n_1 / total_moles)
+            mole_fractions_row_2.append(n_2 / total_moles)
             mole_fractions_row_oil.append(n_oil / total_moles)
 
-        mole_fractions_r22.append(mole_fractions_row_r22)
-        mole_fractions_r115.append(mole_fractions_row_r115)
+        mole_fractions_1.append(mole_fractions_row_1)
+        mole_fractions_2.append(mole_fractions_row_2)
         mole_fractions_oil.append(mole_fractions_row_oil)
 
-    return mole_fractions_r22, mole_fractions_r115, mole_fractions_oil
+    if Fraction_2:
+        return mole_fractions_1, mole_fractions_2, mole_fractions_oil
+    else:
+        return mole_fractions_1, mole_fractions_oil
 
 
  # Расчет ацентрического фактора по корреляции Ли и Кесслера

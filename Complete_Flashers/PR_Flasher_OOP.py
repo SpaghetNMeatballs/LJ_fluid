@@ -114,6 +114,7 @@ if __name__ == "__main__":
                 ABS_error_R22 = abs(mole_fractions_r22[i][j] - flash_data[0][0])
                 ABS_error_R115 = abs(mole_fractions_r115[i][j] - flash_data[0][1])
 
+                #Относительные ошибки
                 Rel_error_R22 = ABS_error_R22 / mole_fractions_r22[i][j]
                 Rel_error_R115 = ABS_error_R115 / mole_fractions_r115[i][j]
 
