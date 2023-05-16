@@ -1,4 +1,3 @@
-from functions.read_func import read_data_from_file_lines
 from thermo import ChemicalConstantsPackage
 from scipy.optimize import minimize
 from thermo import CEOSGas, CEOSLiquid, FlashVL, GCEOSMIX
@@ -101,58 +100,3 @@ def create_constants_package(oil: Oil, IDs) -> ChemicalConstantsPackage:
     )
 
 
-def mass_fractions_to_mole_fractions(Fraction_R22, Fraction_R115, M_r22, M_r115, M_oil):
-    mole_fractions_r22 = []
-    mole_fractions_r115 = []
-    mole_fractions_oil = []
-
-    for i in range(len(Fraction_R22)):
-        mole_fractions_row_r22 = []
-        mole_fractions_row_r115 = []
-        mole_fractions_row_oil = []
-
-        for j in range(len(Fraction_R22[i])):
-            fraction_r22 = Fraction_R22[i][j]
-            fraction_r115 = Fraction_R115[i][j]
-
-            fraction_oil = 1 - (fraction_r22 + fraction_r115)
-
-            n_r22 = fraction_r22 / M_r22
-            n_r115 = fraction_r115 / M_r115
-            n_oil = fraction_oil / M_oil
-
-            total_moles = n_r22 + n_r115 + n_oil
-
-            mole_fractions_row_r22.append(n_r22 / total_moles)
-            mole_fractions_row_r115.append(n_r115 / total_moles)
-            mole_fractions_row_oil.append(n_oil / total_moles)
-
-        mole_fractions_r22.append(mole_fractions_row_r22)
-        mole_fractions_r115.append(mole_fractions_row_r115)
-        mole_fractions_oil.append(mole_fractions_row_oil)
-
-    return mole_fractions_r22, mole_fractions_r115, mole_fractions_oil
-
-
-'''
-
-# Плотность R-22:
-oil_PRMIX = Oil(400.0, 800, 950e3, 0.8)
-
-# Свойства Oil (Молярная масса масла, температура (Кельвины), давление (Па), константа омега)
-oil_SRKMIX = Oil(400.0, 800, 950e3, 0.2)
-
-# Создание констант и экземпляров классов
-IDs = ['r-22', 'chloropentafluoroethane', 'water']
-
-chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
-
-chemical_constants_SR = create_constants_package(oil_SRKMIX, IDs)
-
-temperature = read_data_from_file_lines('temperature.txt')
-pressure = read_data_from_file_lines('pressure.txt')
-viscosity = read_data_from_file_lines('viscosity.txt')
-density = read_data_from_file_lines('density.txt')
-Fraction_R22 = read_data_from_file_lines('fraction_r22.txt')
-Fraction_R115 = read_data_from_file_lines('fraction_r115.txt')
-'''
