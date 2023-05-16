@@ -10,13 +10,12 @@ from Flashers_and_classes.classes import FlashCalculator, create_constants_packa
 from Flashers_and_classes.classes import mass_fractions_to_mole_fractions
 from functions.read_func import read_data_from_file_lines
 from thermo.chemical import Chemical
-import numpy as np
 
 if __name__ == "__main__":
 
     # Соотношение R-22 к R-115
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
-    g = 0.8
+    g = 0.7
     zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
     T = read_data_from_file_lines('temperature.txt')
     P = read_data_from_file_lines('pressure.txt')
@@ -40,6 +39,14 @@ if __name__ == "__main__":
     mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(
         Fraction_R22, Fraction_R115, M_r22, M_r115, M_oil
     )
+    print(mole_fractions_r22)
+    print(mole_fractions_r115)
+    print(mole_fractions_oil)
+
+    zs_r22_mole, zs_r115_mole, zs_oil_mole = mass_fractions_to_mole_fractions(
+        [[zs[0]]], [[zs[1]]], M_r22, M_r115, M_oil
+    )
+    zs_mole = [zs_r22_mole[0][0], zs_r115_mole[0][0], zs_oil_mole[0][0]]
 
     # Расчет ацентрического фактора по корреляции Ли и Кесслера
     T_r = T_oil / 647.3
@@ -57,7 +64,7 @@ if __name__ == "__main__":
     # Оптимизируемые коэффициенты для R-22 и R-115
     initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
     flash_calculator = FlashCalculator(SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23)
-    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, fractions, T, P, zs)
+    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115], T, P, zs_mole)
 
     # Счетчик точек и суммы концентраций
     count = 0
@@ -82,7 +89,7 @@ if __name__ == "__main__":
             Fraction_R115_plot = []
             for j in range(len(P[i])):
                 # Вызов функции для получения мольных долей, температуры и давления
-                flash_data = flash_calculator.calculate_flash(T, P, zs, i, j)
+                flash_data = flash_calculator.calculate_flash(T, P, zs_mole, i, j)
                 file.write('%g\t\t%g\t\t\t%.4f\t\t\t%.4f\t\t\t%.4f\n' % (
                 T[i], P[i][j], float(flash_data[0][0]), float(flash_data[0][1]), float(flash_data[0][2])))
                 if flash_data[3] == 1:
@@ -160,5 +167,5 @@ if __name__ == "__main__":
         Avg_error_R115 = sum_R115 / count
 
         print('****** Средняя погрешность ******')
-        print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22 * 100, 2), '%'', \n')
+        print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22 * 100, 2), '%', '\n')
         print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115 * 100, 2), '%', '\n')
