@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     # Соотношение R-22 к R-115
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
-    g = 0.65
+    g = 0.6
     zs = [g, 1 - g]  # R-22, R-115, ISO 32
     T = read_data_from_file_lines('temperature_r22.txt')
     P = read_data_from_file_lines('pressure_r22.txt')
