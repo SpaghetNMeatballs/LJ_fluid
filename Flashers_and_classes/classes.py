@@ -17,7 +17,8 @@ class FlashCalculator:
         sum1 = 0
         sum2 = 0
         fractions1 = fraction_list[0]
-        fractions2 = fraction_list[1]
+        if len(zs) == 3:
+            fractions2 = fraction_list[1]
 
         for i in range(len(t)):
             for j in range(len(p[i])):
