@@ -1,7 +1,7 @@
 from functions.read_func import read_data_from_file_lines
 from thermo import ChemicalConstantsPackage
 from scipy.optimize import minimize
-from thermo import CEOSGas, CEOSLiquid, FlashVL, GCEOSMIX
+from thermo import CEOSGas, CEOSLiquid, FlashVL
 from dataclasses import dataclass
 
 
