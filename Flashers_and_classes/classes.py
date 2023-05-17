@@ -1,6 +1,6 @@
 from thermo import ChemicalConstantsPackage
 from scipy.optimize import minimize
-from thermo import CEOSGas, CEOSLiquid, FlashVL, GCEOSMIX
+from thermo import CEOSGas, CEOSLiquid, FlashVL
 from dataclasses import dataclass
 
 

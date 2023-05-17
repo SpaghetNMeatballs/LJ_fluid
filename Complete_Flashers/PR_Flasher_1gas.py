@@ -44,12 +44,12 @@ if __name__ == "__main__":
     zs_mole = [zs_r22_mole[0][0], zs_oil_mole[0][0]]
 
     oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega)
-    chemical_constants_SR = create_constants_package(oil_PRMIX, IDs)
+    chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
 
     # ================= Оптимизация коэффициентов =================
     # Оптимизируемые коэффициенты для R-22
     initial_guess_k13_k23 = [0.3, 0.001]
-    flash_calculator = FlashCalculator(PRMIX, oil_PRMIX, chemical_constants_SR, initial_guess_k13_k23)
+    flash_calculator = FlashCalculator(PRMIX, oil_PRMIX, chemical_constants_PR, initial_guess_k13_k23)
     result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22],
                                                   T, P, zs_mole)
 
