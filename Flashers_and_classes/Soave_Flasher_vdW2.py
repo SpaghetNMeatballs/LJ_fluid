@@ -99,7 +99,7 @@ def func_opt(parametrs):
             l23 = parametrs[8] + (T[i] - T[0]) * parametrs[9]
             l12 = parametrs[10] + (T[i] - T[0]) * parametrs[11]
             '''
-            l13 = l23 = l12 = 0.0
+            l13 = l23 = l12 = 0.2
             lijs = [[0, l12, l13],
                     [l12, 0, l23],
                     [l13, l23, 0]]
@@ -110,31 +110,29 @@ def func_opt(parametrs):
             flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
-            calculated=[0, 0]
             if PT.VF == 1:  # Есть только пар
                 print(PT.gas.zs)
                 print('Неудача')
             else:  # Не только пар
-                calculated[0]=PT.liquid0.zs[0]
-                calculated[1]=PT.liquid0.zs[1]
-            
-            # Абсолютные ошибки
-            ABS_error_R22 = abs(Fraction_R22[i][j] - calculated[0])
-            ABS_error_R115 = abs(Fraction_R115[i][j] - calculated[1])
 
-            # Относительные ошибки
-            Rel_error_R22 = ABS_error_R22 / Fraction_R22[i][j]
-            Rel_error_R115 = ABS_error_R115 / Fraction_R115[i][j]
+                # Абсолютные ошибки
+                ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
+                ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
 
-            # Счетчик точек
-            count += 1
-            sum_R22 += ABS_error_R22
-            sum_R115 += ABS_error_R115
+                # Относительные ошибки
+                Rel_error_R22 = ABS_error_R22 / PT.liquid0.zs[0]
+                Rel_error_R115 = ABS_error_R115 / PT.liquid0.zs[1]
+
+                # Счетчик точек
+                count += 1
+                sum_R22 += ABS_error_R22
+                sum_R115 += ABS_error_R115
 
     # Средняя ошибка
     Avg_error_R22 = sum_R22 / count
     Avg_error_R115 = sum_R115 / count
     return Avg_error_R115 + Avg_error_R22
+
 
 # ================= Оптимизация коэффициентов =================
 # Оптимизируемые коэффициенты для R-22 и R-115
@@ -145,6 +143,7 @@ if result.success:
     print(result.message)
 else:
     raise ValueError(result.message)
+
 
 # Счетчик точек и суммы концентраций
 count = 0
@@ -172,8 +171,7 @@ for i in range(len(T)):
         kijs = [[0, k12, k13],
                 [k12, 0, k23],
                 [k13, k23, 0]]
-        
-        l13 = l23 = l12 = 0.0
+        l13 = l23 = l12 = -0.4
         lijs = [[0, l12, l13],
                 [l12, 0, l23],
                 [l13, l23, 0]]
@@ -183,48 +181,46 @@ for i in range(len(T)):
         flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
         PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
-        calculated=[0, 0]
         if PT.VF == 1:  # Есть только пар
             print(PT.gas.zs)
             print('Неудача')
         else:  # Не только пар
-            calculated[0]=PT.liquid0.zs[0]
-            calculated[1]=PT.liquid0.zs[1]
 
-        # Добавление точек в листы
-        R22_plot.append(calculated[0])
-        R115_plot.append(calculated[1])
-        P_bar_plot.append(P_bar[i][j])
-        Fraction_R22_plot.append(Fraction_R22[i][j])
-        Fraction_R115_plot.append(Fraction_R115[i][j])
+            # Добавление точек в листы
+            R22_plot.append(PT.liquid0.zs[0])
+            R115_plot.append(PT.liquid0.zs[1])
+            P_bar_plot.append(P_bar[i][j])
+            Fraction_R22_plot.append(Fraction_R22[i][j])
+            Fraction_R115_plot.append(Fraction_R115[i][j])
 
-        # Абсолютные ошибки
-        ABS_error_R22 = abs(Fraction_R22[i][j] - calculated[0])
-        ABS_error_R115 = abs(Fraction_R115[i][j] - calculated[1])
+            # Абсолютные ошибки
+            ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
+            ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
 
-        # Относительные ошибки
-        Rel_error_R22 = ABS_error_R22/Fraction_R22[i][j]
-        Rel_error_R115 = ABS_error_R115 / Fraction_R115[i][j]
+            # Относительные ошибки
+            Rel_error_R22 = ABS_error_R22/PT.liquid0.zs[0]
+            Rel_error_R115 = ABS_error_R115 / PT.liquid0.zs[1]
 
-        # Счетчик точек
-        count += 1
-        countT += 1
-        sum_R22T += ABS_error_R22
-        sum_R115T += ABS_error_R115
+            # Счетчик точек
+            count += 1
+            countT += 1
+            sum_R22T += ABS_error_R22
+            sum_R115T += ABS_error_R115
 
-        sum_R22 += ABS_error_R22
-        sum_R115 += ABS_error_R115
 
-        print('==============================================================================')
-        print('Температура расчета:', T[i], '°C; Давление расчета:', P_bar[i][j], 'Бар')
-        print('Соотношение компонентов смеси R-22, R-115, ISO 32:', PT.liquid0.zs)
-        print('Пар ', PT.VF, '\n')
-        print('****** Абсолютная погрешность ******')
-        print('Погрешность для R-22:', ABS_error_R22)
-        print('Погрешность для R-115:', ABS_error_R115)
-        print('****** Относительная погрешность ******')
-        print('Погрешность для R-22:', Rel_error_R22)
-        print('Погрешность для R-115:', Rel_error_R115)
+            sum_R22 += ABS_error_R22
+            sum_R115 += ABS_error_R115
+
+            print('==============================================================================')
+            print('Температура расчета:', T[i], '°C; Давление расчета:', P_bar[i][j], 'Бар')
+            print('Соотношение компонентов смеси R-22, R-115, ISO 32:', PT.liquid0.zs)
+            print('Пар ', PT.VF, '\n')
+            print('****** Абсолютная погрешность ******')
+            print('Погрешность для R-22:', ABS_error_R22)
+            print('Погрешность для R-115:', ABS_error_R115)
+            print('****** Относительная погрешность ******')
+            print('Погрешность для R-22:', Rel_error_R22)
+            print('Погрешность для R-115:', Rel_error_R115)
 
     # Средняя ошибка для каждой температуры
     Avg_error_R22T = sum_R22T / countT
