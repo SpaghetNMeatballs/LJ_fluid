@@ -78,7 +78,7 @@ class SRKMIX_vdW2_mixing_rule(SRKMIX):
                 for j in range(0, len(self.zs)):
                     b += self.zs[i] * self.zs[j] * (self.bs[i] + self.bs[j]) * 0.5 * (1 - self.lijs[i][j])
         self.delta = b
-
+'''
     def bij(self, i, j):
         lij = self.lijs[i][j]
         return (self.bs[i] + self.bs[j]) / 2 * (1 - lij)
@@ -90,7 +90,7 @@ class SRKMIX_vdW2_mixing_rule(SRKMIX):
             for j in range(i, N):
                 bij_matrix[i][j] = bij_matrix[j][i] = self.bij(i, j)
         return bij_matrix
-
+'''
 '''
     def a_alphas_vectorized(self, T):
         return SRK_a_alphas_vectorized(T, self.Tcs, self.aij_matrix, self.ms,

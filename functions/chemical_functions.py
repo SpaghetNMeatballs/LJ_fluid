@@ -17,13 +17,14 @@ def mass_fractions_to_mole_fractions(Fraction_1, Fraction_2, M_1, M_2, M_oil):
 
             if Fraction_2:
                 fraction_2 = Fraction_2[i][j]
+                n_2 = fraction_2 / M_2
             else:
                 fraction_2 = 0
+                n_2 = 0
 
             fraction_oil = 1 - (fraction_1 + fraction_2)
 
             n_1 = fraction_1 / M_1
-            n_2 = fraction_2 / M_2
             n_oil = fraction_oil / M_oil
 
             total_moles = n_1 + n_2 + n_oil
