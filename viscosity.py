@@ -1,8 +1,9 @@
-from common import ViscData, aad_new
-from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from numpy import arange, array
+from scipy.optimize import minimize
+
 from calc_functions import DEF, HG, grunberg_nissan, lederer_roegiers
+from common import ViscData, aad_new
 
 
 class VFT:
@@ -15,15 +16,15 @@ class VFT:
         visc_pref = list(self.mu_data[self.pref].values())
         temps = list(self.mu_data[self.pref].keys())
 
-
         # Выбираем начальное приближение на основе характера экспериментальных данных
-        x0 = [0.010124325475473392, 498.84631096931736, 372.92721289829717]
+        x0 = [0.18232, 817.14942, 170.90083]
         if visc_pref[0] < visc_pref[-1]:
             x0 = [8.956959670631126e-05, -1865.4191615857121, 1178.868480983142]
 
         args = (DEF, temps, visc_pref)
         minimized = minimize(fun=aad_new, x0=array(x0), method='Nelder-Mead', args=args, tol=1e-5)
         self.params[0], self.params[1], self.params[2] = minimized.x
+        print(minimized.message)
         return minimized.success
 
     def setup_hg(self) -> bool:
@@ -42,6 +43,11 @@ class VFT:
         args = (HG, points, exp_visc, self.params[:3] + [self.pref])
         minimized = minimize(fun=aad_new, x0=array(x0), method='Nelder-Mead', args=args, tol=1e-7)
         self.params[3], self.params[4], self.params[5], self.params[6] = minimized.x
+        print(f'AAD = {aad_new(self.params[3:7], HG, points, exp_visc, self.params[:3] + [self.pref])}')
+        store = self.params[6]
+        self.params[6] = 0
+        print(f'AAD DEF = {aad_new(self.params[3:7], HG, points, exp_visc, self.params[:3] + [self.pref])}')
+        self.params[6] = store
         return minimized.success
 
     def calc_visc_def(self, t: float) -> float:
@@ -49,7 +55,6 @@ class VFT:
 
     def calc_visc(self, t: float, p: float) -> float:
         return HG(self.params[3:], self.params[:3] + [self.pref], [p, t])
-
 
 
 class Lederer_Roegiers:
@@ -82,23 +87,27 @@ class MuMix2:
         return grunberg_nissan(self.params, mu + x)
 
 
-
 def main_visc_check():
-    substance = "R115"
+    substance = "R22"
     data = ViscData(substance)
     pref = 0.06
 
     visc = data.visc_d
+    t = [258, 273.16, 288.14, 303.13, 318.11, 333.1, 348.08, 363.26]
+    t = [i - 273.15 for i in t]
+    oil_visc_d = [412.33, 136.68, 57.08, 28.17, 16.01, 9.83, 6.69, 4.73]
+    visc = {0.06: {t[i]: oil_visc_d[i] for i in range(len(t))}}
     temps = list(visc[pref].keys())
     viscs = [i[2] for i in data.get_by_pressure(2, pref)]
 
     test = VFT(visc, pref)
     test.setup_def()
     test.setup_hg()
-    print(f'D = {test.params[0]}\nE = {test.params[1]}\nF = {test.params[2]}\n')
+    print(
+        f'D = {test.params[0]}\nE = {test.params[1]}\nF = {test.params[2]}\nG = {test.params[3:6]}\nH = {test.params[6]}')
 
     fig, ax = plt.subplots()
-    ax.scatter(temps, viscs, label="Экспериментальные данные")
+    ax.scatter(temps, oil_visc_d, label="Экспериментальные данные")
     viscs_calc = [test.calc_visc(i, pref) for i in arange(temps[0], temps[-1] + 1)]
 
     viscs_temp = [test.calc_visc_def(i) for i in arange(temps[0], temps[-1] + 1)]
