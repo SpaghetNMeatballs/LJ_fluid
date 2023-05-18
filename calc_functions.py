@@ -48,3 +48,22 @@ def rho_full(params: list[float], static_params: list[float], point: list[float]
     rho0, p0, t0 = static_params
     p, t = point
     return (rho0 / (1 + beta * (t - t0))) / (1 - (p - p0) / e)
+
+
+def rho_paredes_t(params: list[float], point: float) -> float:
+    a = params
+    return a[0] + a[1] * point + a[2] * point ** 2
+
+
+def rho_paredes(params: list[float], static_params: list[float], point: list[float]) -> float:
+    c, b0, b1, b2 = params
+    a0, a1, a2, pref = static_params
+    p, t = point
+    top = rho_paredes_t([a0, a1, a2], t)
+    bottom_common = rho_paredes_t([b0, b1, b2], t)
+    bottom_log = (bottom_common + p) / (bottom_common + pref)
+    try:
+        log(bottom_log)
+    except ValueError:
+        pass
+    return top / (1 - c * log(bottom_log))
