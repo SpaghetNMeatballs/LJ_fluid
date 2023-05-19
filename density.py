@@ -2,6 +2,7 @@ from common import aad, load_from_directory, aad_new, ViscData
 from calc_functions import rho_t, rho_p, rho_full, rho_paredes_t, rho_paredes
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+import matplotlib
 from numpy import arange
 
 
@@ -144,8 +145,13 @@ def rho_paredes_test():
     rho_exp = list(density_dict[pcalc].values())
     t_calc = arange(t_exp[0], t_exp[-1] + 0.1, 0.1)
 
-    ax.scatter(t_exp, rho_exp)
-    ax.plot(t_calc, [test.calc_t(i) for i in t_calc])
+    font = {'family': 'Times New Roman', 'size': 10.5}
+    matplotlib.rc('font', **font)
+    ax.plot(t_calc, [test.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
+    ax.scatter(t_exp, rho_exp, label="Экспериментальные данные")
+    ax.set_ylabel("$\it{Плотность, кг/м3}$")
+    ax.set_xlabel('$\it{T, °C}$')
+    plt.legend()
     plt.show()
 
 
