@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from numpy import arange, array
 from scipy.optimize import minimize
-
+import matplotlib
 from calc_functions import DEF, HG, grunberg_nissan, lederer_roegiers
 from common import ViscData, aad_new
 
@@ -17,7 +17,7 @@ class VFT:
         temps = list(self.mu_data[self.pref].keys())
 
         # Выбираем начальное приближение на основе характера экспериментальных данных
-        x0 = [0.18232, 817.14942, 170.90083]
+        x0 = [0.010124325475473392, 498.84631096931736, 372.92721289829717]
         if visc_pref[0] < visc_pref[-1]:
             x0 = [8.956959670631126e-05, -1865.4191615857121, 1178.868480983142]
 
@@ -88,15 +88,15 @@ class MuMix2:
 
 
 def main_visc_check():
-    substance = "R22"
+    substance = "R115"
     data = ViscData(substance)
     pref = 0.06
 
     visc = data.visc_d
     t = [258, 273.16, 288.14, 303.13, 318.11, 333.1, 348.08, 363.26]
     t = [i - 273.15 for i in t]
-    oil_visc_d = [412.33, 136.68, 57.08, 28.17, 16.01, 9.83, 6.69, 4.73]
-    visc = {0.06: {t[i]: oil_visc_d[i] for i in range(len(t))}}
+    #oil_visc_d = [412.33, 136.68, 57.08, 28.17, 16.01, 9.83, 6.69, 4.73]
+    #visc = {0.06: {t[i]: oil_visc_d[i] for i in range(len(t))}}
     temps = list(visc[pref].keys())
     viscs = [i[2] for i in data.get_by_pressure(2, pref)]
 
@@ -106,16 +106,17 @@ def main_visc_check():
     print(
         f'D = {test.params[0]}\nE = {test.params[1]}\nF = {test.params[2]}\nG = {test.params[3:6]}\nH = {test.params[6]}')
 
+    font = {'family': 'Times New Roman', 'size': 10.5}
+    matplotlib.rc('font', **font)
     fig, ax = plt.subplots()
-    ax.scatter(temps, oil_visc_d, label="Экспериментальные данные")
+    ax.scatter(temps, viscs, label="Экспериментальные данные")
     viscs_calc = [test.calc_visc(i, pref) for i in arange(temps[0], temps[-1] + 1)]
 
     viscs_temp = [test.calc_visc_def(i) for i in arange(temps[0], temps[-1] + 1)]
     ax.plot(arange(temps[0], temps[-1] + 1), viscs_calc, "r",
             label="Расчётные значения")
-    ax.set_ylabel("Mu, cP")
-    ax.set_xlabel("T, Гр. Цельсия")
-    ax.set_title("mu = f(t)")
+    ax.set_ylabel("$\it{Вязкость, сантипуаз}$")
+    ax.set_xlabel('$\it{T, °C}$')
     plt.grid()
     plt.legend()
     plt.show()
