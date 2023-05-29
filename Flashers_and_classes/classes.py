@@ -100,6 +100,36 @@ class FlashCalculator:
         else:  # Не только пар
             return [PT.liquid0.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12] + ([k13, k23] if len(fractions) == 3 else [])
 
+    def calculate_flash1(self, temperature: float, pressure: float) -> list[float]:
+        t = [temperature]  # Преобразуем входные параметры в списки
+        p = [[pressure]]
+
+        if len(self.fractions) == 3:
+            k13 = self.params[0] + (t[0] - self.t[0]) * self.params[1]
+            k23 = self.params[2] + (t[0] - self.t[0]) * self.params[3]
+            k12 = self.params[4] + (t[0] - self.t[0]) * self.params[5]
+
+            kijs = [[0, k12, k13],
+                    [k12, 0, k23],
+                    [k13, k23, 0]]
+        elif len(self.fractions) == 2:
+            k12 = self.params[0] + (t[0] - self.t[0]) * self.params[1]
+            kijs = [[0, k12],
+                    [k12, 0]]
+
+        eos_kwargs = {'Pcs': self.constants.Pcs, 'Tcs': self.constants.Tcs, 'omegas': self.constants.omegas,
+                      'kijs': kijs}
+        gas = CEOSGas(self.class_flash, eos_kwargs=eos_kwargs)
+        liquid = CEOSLiquid(self.class_flash, eos_kwargs=eos_kwargs)
+        flasher = FlashVL(self.constants, self.properties, liquid=liquid, gas=gas)
+
+        PT = flasher.flash(T=t[0] + 273.15, P=p[0][0] * pow(10, 5), zs=self.fractions)
+
+        if PT.VF == 1:  # Есть только пар
+            return PT.gas.zs
+        else:  # Не только пар
+            return PT.liquid0.zs
+
 
 @dataclass
 class Oil:
