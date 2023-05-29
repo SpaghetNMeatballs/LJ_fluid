@@ -134,7 +134,7 @@ if __name__ == "__main__":
         # Построение графика
         plt.title('График зависимости x от P при Т=' + str(T[i]) + '°C', fontsize=18,
                   fontname='Times New Roman')
-        plt.xlabel('P, кПа', fontsize=18)
+        plt.xlabel('P, бар', fontsize=18)
         plt.ylabel('x, мольн. доля', fontsize=18)
         plt.scatter(P_bar_plot, R22_plot)
         plt.scatter(P_bar_plot, Fraction_R22_plot)
