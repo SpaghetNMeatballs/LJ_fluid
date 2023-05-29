@@ -16,10 +16,10 @@ if __name__ == "__main__":
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
     g = 0.55
     zs = [g, 1 - g]  # R-22, R-115, ISO 32
-    T = read_data_from_file_lines('temperature_r22.txt')[1:]
-    t_min = T[0]
-    P = read_data_from_file_lines('pressure_r22.txt')[1:]
-    Fraction_R22 = read_data_from_file_lines('fraction_r22_alone.txt')[1:]
+    T = read_data_from_file_lines('temperature_r22.txt')
+    t_min = T[0]  # начальная температура для оптимизации
+    P = read_data_from_file_lines('pressure_r22.txt')
+    Fraction_R22 = read_data_from_file_lines('fraction_r22_alone.txt')
     IDs = ['r-22', 'water']
 
     # Молярная масса хладагента R-22

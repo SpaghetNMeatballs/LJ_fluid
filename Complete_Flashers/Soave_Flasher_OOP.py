@@ -18,6 +18,7 @@ if __name__ == "__main__":
     g = 0.7
     zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
     T = read_data_from_file_lines('temperature.txt')
+    t_min = T[0]  # начальная температура для оптимизации
     P = read_data_from_file_lines('pressure.txt')
     fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
     Fraction_R22, Fraction_R115 = fractions
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     # ================= Оптимизация коэффициентов =================
     # Оптимизируемые коэффициенты для R-22 и R-115
     initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
-    flash_calculator = FlashCalculator(SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23)
+    flash_calculator = FlashCalculator(SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23, zs_mole, t_min)
     result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115],
                                                   T, P, zs_mole)
 
@@ -84,7 +85,7 @@ if __name__ == "__main__":
         Fraction_R115_plot = []
         for j in range(len(P[i])):
             # Вызов функции для получения мольных долей, температуры и давления
-            flash_data = flash_calculator.calculate_flash(T, P, zs_mole, i, j)
+            flash_data = flash_calculator.calculate_flash(T[i], P[i][j])
             if flash_data[3] == 1:
                 print('================ПРИСУТСТВУЕТ ТОЛЬКО ПАР================')
                 print('Температура расчета:', T[i], '°C\n')
