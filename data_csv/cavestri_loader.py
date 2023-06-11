@@ -40,17 +40,19 @@ class DataManager:
         return result
 
 
-def get_data() -> DataManager:
+def get_data(part: bool) -> DataManager:
     result = DataManager()
+    goal = 0.488 if part else 1
     file_path = os.path.join(os.path.dirname(__file__), 'cavestri_data.csv')
     with open(file_path, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=';')
         for row in reader:
             float_row = [float(i) for i in row]
-            result.add_point(float_row)
+            if float_row[2] == goal:
+                result.add_point(float_row)
     return result
 
 
 if __name__ == "__main__":
-    test = get_data()
+    test = get_data(True)
     print(test.points[0])

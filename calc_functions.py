@@ -7,7 +7,6 @@ def DEF(params: list[float], point: float) -> float:
     return d * exp(e / (point + 273.15 - f))
 
 
-
 # Params = [G0, G1, G2, H], Static_Params = все для DEF и pref, point = [p, t]
 def HG(params: list[float], static_params: list[float], point: list[float]) -> float:
     g0, g1, g2, h = params
@@ -41,7 +40,7 @@ def kendall_monroe(point: list[float], static_params: list[float]) -> float:
     return (x1 * v1 ** (1 / 3) + x2 * v2 ** (1 / 3)) ** 3
 
 
-# params = d, static_params = x, point = mu
+# params = d, static_params = x, point = [x1, x2, mu1, mu2]
 def grunberg_nissan(params: list[float], point: list[float]):
     d = [params[:2], params[2:]]
     x = point[2:]
@@ -51,8 +50,8 @@ def grunberg_nissan(params: list[float], point: list[float]):
     return visc_sum + param_sum
 
 
-def lederer_roegiers(params: list[float], static_params: list[float], point: list[float]) -> float:
-    alpha = params[0]
+def lederer_roegiers(params: float, static_params: list[float], point: list[float]) -> float:
+    alpha = params
     x1, x2 = static_params
     mu1, mu2 = point
     return exp((x1 * log(mu1) + alpha * x2 * log(mu2)) / (x1 + alpha * x2))
