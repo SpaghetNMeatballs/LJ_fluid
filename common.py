@@ -139,11 +139,17 @@ def aad_new(params: list[float], func: callable, points: list, exp: list[float],
     if len(points) != len(exp):
         raise ValueError(f"Input lists have different shapes: {len(points)} and {len(exp)}")
     result = 0
+    calc = []
     for i in range(len(points)):
-        if static_params:
-            result += abs((func(params, static_params, points[i]) - exp[i]) / exp[i])
+        if static_params is None:
+            calc.append(func(params, points[i]))
+
         else:
-            result += abs((func(params, points[i]) - exp[i]) / exp[i])
+            calc.append(func(params, static_params, points[i]))
+
+    for i in range(len(points)):
+        result += abs((exp[i] - calc[i]) / exp[i])
+
     result *= 100 / len(points)
     return result
 

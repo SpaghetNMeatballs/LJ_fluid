@@ -1,18 +1,17 @@
 from common import aad, load_from_directory, aad_new, ViscData
-from calc_functions import rho_t, rho_p, rho_full
+from calc_functions import rho_t, rho_p, rho_full, rho_paredes_t, rho_paredes
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+import matplotlib
 from numpy import arange
 
 
 class Density:
-
     def __init__(self, rho0: float, point0: list[float]):
         self.rho0 = rho0
         self.p0, self.t0 = point0
         self.beta = 0
         self.e = 3
-
 
     def calc_rho_t(self, t: float) -> float:
         return rho_t(self.beta, [self.rho0, self.t0], t)
@@ -48,9 +47,50 @@ class Density:
         return result.success
 
 
-if __name__ == "__main__":
-    substance = "R22"
+class DensityParedes:
+    def __init__(self, pref: float):
+        self.pref = pref
+        self.params = [1232.7, -0.8404, 0.0001143, 0.08365, 452.16, -1.5087, 0.0014034]
 
+    def setup_t(self, rho_pref: dict[float:float]) -> bool:
+        t = list(rho_pref.keys())
+        rho = list(rho_pref.values())
+        args = (rho_paredes_t, t, rho)
+        minimized = minimize(fun=aad_new, method='Nelder-Mead', x0=[1232.7, -5, 1], args=args,
+                             options={'maxiter': 100000, 'maxfev': 100000})
+        print(minimized.message)
+        print(f'AAD_t = {aad_new(minimized.x, rho_paredes_t, t, rho)}')
+        self.params[:3] = minimized.x
+        return minimized.success
+
+    def setup(self, rho_dict: dict[float:dict[float:float]], pref: float = None) -> bool:
+        p_list = list(rho_dict.keys())
+        if pref is None:
+            pref = p_list[int(len(p_list) / 2)]
+        if not self.setup_t(rho_dict[pref]):
+            raise Exception("Error while optimizing t equation")
+        points = []
+        rho = []
+        for i in p_list:
+            t_list = list(rho_dict[i].keys())
+            for j in t_list:
+                points.append([i, j])
+                rho.append(rho_dict[i][j])
+        args = (rho_paredes, points, rho, self.params[:3] + [pref])
+        x0 = [0.08365, 452.16, -1.5087, 0.0014034]
+        minimized = minimize(fun=aad_new, x0=x0, args=args,
+                             options={'maxiter': 100000, 'maxfev': 100000})
+        print(minimized.message)
+        print(f'AAD = {aad_new(minimized.x, rho_paredes, points, rho, self.params[:3] + [pref])}')
+        self.params[3:] = minimized.x
+        return minimized.success
+
+    def calc_t(self, t: float) -> float:
+        return rho_paredes_t(self.params[:3], t)
+
+
+def rho_test():
+    substance = "R115"
     substance_data = ViscData(substance)
     points_to_process = substance_data.get_all_points(0)
     rho = [i[2] for i in points_to_process]
@@ -86,3 +126,34 @@ if __name__ == "__main__":
     print("Beta = %f" % density_calc.beta)
     print("E = %f" % density_calc.e)
     plt.show()
+
+
+def rho_paredes_test():
+    substance = "R115"
+    substance_data = ViscData(substance)
+    density_dict = substance_data.density
+    pref = 0.06
+    rho_pref = density_dict[pref]
+
+    test = DensityParedes(pref)
+    if not test.setup(density_dict, pref):
+        raise Exception('Error while optimizing')
+
+    pcalc = 0.06
+    fig, ax = plt.subplots(1, 1)
+    t_exp = list(density_dict[pcalc].keys())
+    rho_exp = list(density_dict[pcalc].values())
+    t_calc = arange(t_exp[0], t_exp[-1] + 0.1, 0.1)
+
+    font = {'family': 'Times New Roman', 'size': 10.5}
+    matplotlib.rc('font', **font)
+    ax.plot(t_calc, [test.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
+    ax.scatter(t_exp, rho_exp, label="Экспериментальные данные")
+    ax.set_ylabel("$\it{Плотность, кг/м3}$")
+    ax.set_xlabel('$\it{T, °C}$')
+    plt.legend()
+    plt.show()
+
+
+if __name__ == "__main__":
+    rho_paredes_test()
