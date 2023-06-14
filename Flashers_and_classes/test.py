@@ -26,16 +26,34 @@ if __name__ == "__main__":
         else:
             print("Некорректные данные. Проверьте ввод.")
 
-    # Соотношение R-22 к R-115
+    # Ввод газов для системы
+    # IDs = ['r-22', 'chloropentafluoroethane', 'water']
+    print('================Используемые газы================')
+    IDs = []
+    print("Введите используемые газы в системе. Последним элементом введите 'water', он будет заменен маслом.\n"
+          "Для завершения ввода введите 'end':")
+    while True:
+        element = input("Введите газ/закончите ввод: ")
+        if element == "end":
+            break
+        IDs.append(element)
+    # print("Введенные элементы списка IDS:", IDs)
+
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
-    g = 0.7
-    zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
+    # g = 0.7
+    # zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
+    g = float(input("Введите распределительный коэффициент g: "))
+    zs = []
+    for i in range(len(IDs) - 1):
+        component_ratio = float(input(f"Введите соотношение газа {IDs[i]}: "))
+        zs.append(component_ratio * g)
+    zs.append(1 - g)  # Добавляем последний элемент (распределенное масло) в массив zs
+
     T = read_data_from_file_lines('temperature.txt')
     t_min = T[0]  # начальная температура для оптимизации
     P = read_data_from_file_lines('pressure.txt')
     fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
     Fraction_R22, Fraction_R115 = fractions
-    IDs = ['r-22', 'chloropentafluoroethane', 'water']
 
     # Молярная масса хладагента R-22
     r22 = Chemical(IDs[0])
@@ -87,6 +105,8 @@ if __name__ == "__main__":
     zs_mole = [zs_r22_mole[0][0], zs_r115_mole[0][0], zs_oil_mole[0][0]]
 
     oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega)
+
+    #Перезаписали данные последнего элемента под масло
     chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
 
     # ================= Оптимизация коэффициентов =================
