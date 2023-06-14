@@ -1,15 +1,6 @@
 import csv
 import os
-from dataclasses import dataclass
-
-
-@dataclass
-class Point:
-    t: float
-    p: float
-    x: list[float]
-    mu: float
-    rho: float
+from common import Point
 
 
 class DataManager:
@@ -40,9 +31,10 @@ class DataManager:
         return result
 
 
+# If part => return mix of oil and r22
 def get_data(part: bool) -> DataManager:
     result = DataManager()
-    goal = 0.488 if part else 1
+    goal = 1 if part else 0.488
     file_path = os.path.join(os.path.dirname(__file__), 'cavestri_data.csv')
     with open(file_path, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=';')

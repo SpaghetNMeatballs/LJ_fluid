@@ -1,4 +1,4 @@
-from common import aad, load_from_directory, aad_new, ViscData
+from common import Point, aad_new, ViscData
 from calc_functions import rho_t, rho_p, rho_full, rho_paredes_t, rho_paredes
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
@@ -7,42 +7,46 @@ from numpy import arange
 
 
 class Density:
-    def __init__(self, rho0: float, point0: list[float]):
-        self.rho0 = rho0
-        self.p0, self.t0 = point0
+    def __init__(self, point0: Point):
+        self.point0 = point0
         self.beta = 0
-        self.e = 3
+        self.e = 6.089e13
 
     def calc_rho_t(self, t: float) -> float:
-        return rho_t(self.beta, [self.rho0, self.t0], t)
+        return rho_t(self.beta, [self.point0.rho, self.point0.t], t)
 
     def calc_rho_p(self, p: float) -> float:
-        return rho_p(self.beta, [self.rho0, self.p0], p)
+        return rho_p(self.beta, [self.point0.rho, self.point0.p], p)
 
-    def calc_rho_full(self, point: list[float]) -> float:
-        p, t = point
-        return rho_full([self.e, self.beta], [self.rho0, self.p0, self.t0], [p, t])
+    def calc_rho_full(self, point: Point) -> float:
+        p = point.p
+        t = point.t
+        return rho_full([self.e, self.beta], [self.point0.rho, self.point0.p, self.point0.t], [p, t])
 
-    def setup_rho_t(self, temps: list[float], rho: list[float]) -> bool:
-        args = (rho_t, temps, rho, [self.rho0, self.t0])
-        result = minimize(fun=aad_new, x0=0, args=args)
+    def setup_rho_t(self, points: list[Point], p0_ind: int) -> bool:
+        if self.point0:
+            assert self.point0 == points[p0_ind], "Wrong data passed"
+        self.point0 = points[p0_ind]
+        temps = [i.t for i in points]
+        rho = [i.rho for i in points]
+        args = (rho_t, temps, rho, [self.point0.rho, self.point0.t])
+        result = minimize(fun=aad_new, x0=0, method='Powell', args=args)
         self.beta = result.x[0]
+        print(result.message)
         return result.success
 
     def setup_rho_p(self, p: list[float], rho: list[float]) -> bool:
-        args = (rho_p, p, rho, [self.rho0, self.p0])
+        args = (rho_p, p, rho, [self.point0.rho, self.point0.p])
         result = minimize(fun=aad_new, x0=3, args=args)
         self.e = result.x[0]
         return result.success
 
     def setup_rho_full(self, rho, points) -> bool:
-        static_params = (self.rho0, self.p0, self.t0)
+        static_params = (self.point0.rho, self.point0.p, self.point0.t)
         args = (rho_full, points, rho, static_params)
-        print(aad_new([3, 0], rho_full, points, rho, static_params))
         result = minimize(fun=aad_new, method='Nelder-Mead', x0=[3, 0], args=args,
                           options={'maxiter': 100000, 'maxfev': 100000})
         self.e, self.beta = result.x
-        print(aad_new([self.e, self.beta], rho_full, points, rho, static_params))
         print(result.message)
         return result.success
 
@@ -56,7 +60,7 @@ class DensityParedes:
         t = list(rho_pref.keys())
         rho = list(rho_pref.values())
         args = (rho_paredes_t, t, rho)
-        minimized = minimize(fun=aad_new, method='Nelder-Mead', x0=[1232.7, -5, 1], args=args,
+        minimized = minimize(fun=aad_new, method='Nelder-Mead', x0=[354, -7, 0], args=args,
                              options={'maxiter': 100000, 'maxfev': 100000})
         print(minimized.message)
         print(f'AAD_t = {aad_new(minimized.x, rho_paredes_t, t, rho)}')
@@ -90,48 +94,82 @@ class DensityParedes:
 
 
 def rho_test():
-    substance = "R115"
+    substance = "R22"
     substance_data = ViscData(substance)
-    points_to_process = substance_data.get_all_points(0)
-    rho = [i[2] for i in points_to_process]
-    points = [i[:2] for i in points_to_process]
-    rh0, p0, t0 = substance_data.get_middle_point(0)
-    density_calc = Density(rh0, [p0, t0])
+    points_to_process = substance_data.points
+    points = [[i.p, i.t] for i in points_to_process]
+    rho = [i.rho for i in points_to_process]
+    point0 = points_to_process[int(len(points_to_process) / 2)]
+    density_calc = Density(point0)
     if not density_calc.setup_rho_full(rho, points):
         print('Error while optimizing')
 
-    fig, ax = plt.subplots(2, 4)
-    p_arr = list(substance_data.density.keys())
-    ax[0][0].scatter(x=p_arr, y=[substance_data.density[i][t0] for i in p_arr])
-    calc_p = arange(0.04, 0.101, 0.001)
-    calc_rho = [density_calc.calc_rho_full([i, t0]) for i in calc_p]
-    ax[0][0].plot(calc_p, calc_rho, "r", label="Расчётные значения")
-    for i in range(len(p_arr)):
-        p_cur = p_arr[i]
-        graphy = (i + 1) // 4
-        graphx = (i + 1) % 4
-        exp_values = substance_data.get_by_pressure(0, p_arr[i])
-        exp_temps = [j[1] for j in exp_values]
-        exp_rho = [j[2] for j in exp_values]
-        step = 0.01
-        t_calc = arange(exp_temps[0], exp_temps[-1] + step, step)
-        rho_calc = [density_calc.calc_rho_full([p_cur, j]) for j in t_calc]
-        ax[graphy][graphx].scatter(x=exp_temps, y=exp_rho, label="Экспериментальные данные")
-        ax[graphy][graphx].plot(t_calc, rho_calc, "r", label="Расчётные значения")
-        ax[graphy][graphx].set_title("p = %.2f MPa" % p_cur)
-        ax[graphy][graphx].set_ylabel("Rho, м3/кг")
-        ax[graphy][graphx].set_xlabel("P, МПа")
-        ax[graphy][graphx].legend()
-
+    print(f'rho0 = {density_calc.point0.rho}\nt0 = {density_calc.point0.t}\np0 = {density_calc.point0.p}')
     print("Beta = %f" % density_calc.beta)
     print("E = %f" % density_calc.e)
+    static_params = (density_calc.point0.rho, density_calc.point0.p, density_calc.point0.t)
+    t_arr = [i.t for i in substance_data.get_by_pressure(point0.p)]
+    rho_arr = [i.rho for i in substance_data.get_by_pressure(point0.p)]
+    t_calc = arange(min(t_arr), max(t_arr) + 0.1, 0.1)
+    print(f'AAD = {aad_new([3, 0], rho_full, points, rho, static_params)}%')
+    font = {'family': 'Times New Roman', 'size': 14}
+    matplotlib.rc('font', **font)
+    fig, ax = plt.subplots()
+    ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
+    ax.plot(t_calc, [density_calc.calc_rho_full(Point(t=i, p=point0.p)) for i in t_calc], "r",
+            label="Расчётные значения")
+    ax.set_ylabel("Rho, м3/кг")
+    ax.set_xlabel("P, МПа")
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+
+def rho_oil_tait():
+    t_arr = [-25, 0, 25, 50, 75, 100, 125]
+    rho_arr = [1733.38, 289.693, 64.8321, 19.9096, 7.79992, 4.19357, 3.09385]
+    t_calc = arange(t_arr[0], t_arr[-1] + 0.1, 0.1)
+    rho_calc = DensityParedes(0)
+    rho_calc.setup_t({t_arr[i]: rho_arr[i] for i in range(len(t_arr))})
+    fig, ax = plt.subplots()
+    ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
+    ax.plot(t_calc, [rho_calc.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
+    ax.set_ylabel("Rho, м3/кг")
+    ax.set_xlabel("P, МПа")
+    plt.legend()
+    plt.show()
+
+
+def rho_oil():
+    t_arr = [-25, 0, 25, 50, 75, 100, 125]
+    rho_arr = [i * 10 ** 3 for i in [0.935, 0.910277, 0.888055, 0.86833, 0.847776, 0.828056, 0.807502]]
+    point_list = [Point(t=t_arr[i], rho=rho_arr[i]) for i in range(len(t_arr))]
+    t_calc = arange(t_arr[0], t_arr[-1] + 0.1, 0.1)
+    rho_calc = Density(point_list[4])
+    rho_calc.setup_rho_t(point_list, 4)
+    print(rho_calc.beta)
+    print(aad_new(rho_calc.beta, rho_t, t_arr, rho_arr, [rho_calc.point0.rho, rho_calc.point0.t]))
+    font = {'family': 'Times New Roman', 'size': 14}
+    matplotlib.rc('font', **font)
+    fig, ax = plt.subplots()
+    ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
+    ax.plot(t_calc, [rho_calc.calc_rho_t(i) for i in t_calc], "r", label="Расчётные значения")
+    ax.set_ylabel("Rho, м3/кг")
+    plt.grid()
+    ax.set_xlabel("P, МПа")
+    plt.legend()
     plt.show()
 
 
 def rho_paredes_test():
-    substance = "R115"
+    substance = "R22"
     substance_data = ViscData(substance)
-    density_dict = substance_data.density
+    density_dict = {}
+    for i in substance_data.points:
+        if i.p in list(density_dict.keys()):
+            density_dict[i.p][i.t] = i.rho
+        else:
+            density_dict[i.p] = {i.t: i.rho}
     pref = 0.06
     rho_pref = density_dict[pref]
 
@@ -156,4 +194,4 @@ def rho_paredes_test():
 
 
 if __name__ == "__main__":
-    rho_paredes_test()
+    rho_oil()
