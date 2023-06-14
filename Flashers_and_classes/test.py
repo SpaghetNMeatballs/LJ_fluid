@@ -14,10 +14,11 @@ import openpyxl
 if __name__ == "__main__":
 
     # Блок ввода данных (интерфейс)
+    print('================Выбор уравнения состояния================')
     flash_class = None
     while not flash_class:
         # Получение выбора пользователя для класса PRMIX
-        flash_class_name = input("Введите уравнение состояния (SRKMIX или PRMIX): ")
+        flash_class_name = input("Введите уравнение состояния для расчета (SRKMIX или PRMIX): ")
         if flash_class_name == "SRKMIX":
             flash_class = SRKMIX
         elif flash_class_name == "PRMIX":
@@ -45,9 +46,15 @@ if __name__ == "__main__":
     M_r115 = round(r115.MW, 2)  #154.47
 
     # Критические параметры масла:
+    print('================Критические параметры масла================')
+    M_oil = float(input("Введите молярную массу масла: "))
+    T_oil = float(input("Введите температуру масла в Кельвинах: "))
+    P_oil = float(input("Введите давление масла в Па: "))
+    '''
     M_oil = 400.0  # Молярная масса масла
     T_oil = 800  # Кельвины
     P_oil = 950e3  # Па
+    '''
     # Расчет ацентрического фактора по корреляции Ли и Кесслера
     omega = calculate_acentrick_factor(T_oil, P_oil, M_oil)
 
