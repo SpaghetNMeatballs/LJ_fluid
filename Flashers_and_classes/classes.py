@@ -102,36 +102,8 @@ class FlashCalculator:
         else:  # Не только пар
             return [PT.liquid0.zs, t, p, PT.VF, k12] + ([k13, k23] if len(self.fractions) == 3 else [])
 
+
 '''
-    def calculate_flash(self, t: list[float], p: list[list[float]], fractions: list[float], t_ind: int, p_ind: int):
-        if len(fractions) == 3:
-            k13 = self.params[0] + (t[t_ind] - t[0]) * self.params[1]
-            k23 = self.params[2] + (t[t_ind] - t[0]) * self.params[3]
-            k12 = self.params[4] + (t[t_ind] - t[0]) * self.params[5]
-
-            kijs = [[0, k12, k13],
-                    [k12, 0, k23],
-                    [k13, k23, 0]]
-        elif len(fractions) == 2:
-            k12 = self.params[0] + (t[t_ind] - t[0]) * self.params[1]
-            kijs = [[0, k12],
-                    [k12, 0]]
-
-        eos_kwargs = {'Pcs': self.constants.Pcs, 'Tcs': self.constants.Tcs, 'omegas': self.constants.omegas,
-                      'kijs': kijs}
-        gas = CEOSGas(self.class_flash, eos_kwargs=eos_kwargs)
-        liquid = CEOSLiquid(self.class_flash, eos_kwargs=eos_kwargs)
-        flasher = FlashVL(self.constants, self.properties, liquid=liquid, gas=gas)
-
-        PT = flasher.flash(T=t[t_ind] + 273.15, P=p[t_ind][p_ind] * pow(10, 5), zs=fractions)
-
-        if PT.VF == 1:  # Есть только пар
-            return [PT.gas.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12] + ([k13, k23] if len(fractions) == 3 else [])
-        else:  # Не только пар
-            return [PT.liquid0.zs, t[t_ind], p[t_ind][p_ind], PT.VF, k12] + ([k13, k23] if len(fractions) == 3 else [])
-'''
-
-
 @dataclass
 class Oil:
     M_oil: float
@@ -150,5 +122,25 @@ def create_constants_package(oil: Oil, IDs) -> ChemicalConstantsPackage:
         Pcs=constants.Pcs[:-1] + [oil.P_oil],
         Tcs=constants.Tcs[:-1] + [oil.T_oil]
     )
+'''
 
 
+@dataclass
+class Oil:
+    M_oil: float
+    T_oil: float
+    P_oil: float
+    Omega_oil: float
+    name: str
+
+
+def create_constants_package(oil: Oil, IDs) -> ChemicalConstantsPackage:
+    # Перезаписали критические параметры для воды под масло ISO 32
+    constants = ChemicalConstantsPackage.from_IDs(IDs)[0]
+    return ChemicalConstantsPackage(
+        MWs=constants.MWs[:-1] + [oil.M_oil],
+        names=constants.names[:-1] + [oil.name],
+        omegas=constants.omegas[:-1] + [oil.Omega_oil],
+        Pcs=constants.Pcs[:-1] + [oil.P_oil],
+        Tcs=constants.Tcs[:-1] + [oil.T_oil]
+    )

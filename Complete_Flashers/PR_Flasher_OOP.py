@@ -22,6 +22,7 @@ if __name__ == "__main__":
     P = read_data_from_file_lines('pressure.txt')
     fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
     Fraction_R22, Fraction_R115 = fractions
+    print(Fraction_R22)
     IDs = ['r-22', 'chloropentafluoroethane', 'water']
 
     # Молярная масса хладагента R-22
@@ -43,12 +44,14 @@ if __name__ == "__main__":
     mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(
         Fraction_R22, Fraction_R115, M_r22, M_r115, M_oil
     )
+    print(mole_fractions_r22)
 
     # Расчет мольных долей для каждого компонента системы реализуемой программы
     zs_r22_mole, zs_r115_mole, zs_oil_mole = mass_fractions_to_mole_fractions(
         [[zs[0]]], [[zs[1]]], M_r22, M_r115, M_oil
     )
     zs_mole = [zs_r22_mole[0][0], zs_r115_mole[0][0], zs_oil_mole[0][0]]
+    print(zs_mole)
 
     oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega)
     chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)

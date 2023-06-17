@@ -1,6 +1,6 @@
 import math
 
-
+'''
 # Функция перевода из массовых долей в мольные доли для двух/трехкомпонентной системы с маслом
 def mass_fractions_to_mole_fractions(Fraction_1, Fraction_2, M_1, M_2, M_oil):
     mole_fractions_1 = []
@@ -42,8 +42,51 @@ def mass_fractions_to_mole_fractions(Fraction_1, Fraction_2, M_1, M_2, M_oil):
     else:
         return mole_fractions_1, mole_fractions_oil
 
+'''
 
- # Расчет ацентрического фактора по корреляции Ли и Кесслера
+
+def mass_fractions_to_mole_fractions(fractions, M_gas, M_oil):
+    mole_fractions = {}
+    gas_keys = list(fractions.keys())
+    max_length = len(fractions[gas_keys[0]])
+
+    for key in gas_keys:
+        mole_fractions[key] = []
+
+    mole_fractions['Oil'] = []
+
+    # Получение длины вложенных списков для первого ключа
+    nested_lengths = [len(fractions[gas_keys[0]][i]) for i in range(max_length)]
+
+    for i in range(max_length):
+        mole_fractions_row = []
+        nested_length = nested_lengths[i]  # Длина текущего вложенного списка
+
+        for j in range(nested_length):
+            oil_fraction = round(1 - sum(fractions[key][i][j] for key in gas_keys), 1)
+            mole_fractions_row_gas = {}
+            total_moles = 0
+
+            for key in gas_keys:
+                fraction = fractions[key][i][j]
+                n = fraction / M_gas[key]
+                mole_fractions_row_gas[key] = n
+                total_moles += n
+
+            n_oil = oil_fraction / M_oil
+            total_moles += n_oil
+            mole_fractions_row_gas['Oil'] = n_oil / total_moles
+
+            mole_fractions_row.append([mole_fractions_row_gas[key] / total_moles for key in gas_keys])
+
+        for key in gas_keys:
+            mole_fractions[key].append(mole_fractions_row.copy())
+        mole_fractions['Oil'].append(mole_fractions_row.copy())
+
+    return mole_fractions
+
+
+# Расчет ацентрического фактора по корреляции Ли и Кесслера
 def calculate_acentrick_factor(T, P, M):
     T_r = T / 647.3
     P_r = P / 220.6e5

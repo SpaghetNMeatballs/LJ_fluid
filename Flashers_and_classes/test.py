@@ -4,6 +4,8 @@
 # Построить зависимость концентрации от давления
 
 import matplotlib.pyplot as plt
+import os
+import thermo
 from thermo import PRMIX, SRKMIX
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
 from functions.chemical_functions import mass_fractions_to_mole_fractions, calculate_acentrick_factor
@@ -39,6 +41,12 @@ if __name__ == "__main__":
         element = input("Введите газ/закончите ввод: ")
         if element == "end":
             break
+        # Проверка наличия элемента в библиотеке thermo
+        try:
+            thermo.chemical.Chemical(element)  # Создаем объект Chemical для проверки наличия вещества
+        except ValueError:
+            print(f"Ошибка: Вещество '{element}' отсутствует в библиотеке, возможно имеет другое название.")
+            continue
         IDs.append(element)
     # print("Введенные элементы списка IDS:", IDs)
 
@@ -46,18 +54,54 @@ if __name__ == "__main__":
     # g = 0.7
     # zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
     g = float(input("Введите распределительный коэффициент g: "))
-    zs = []
+    zs = {}
     for i in range(len(IDs) - 1):
-        component_ratio = float(input(f"Введите соотношение газа {IDs[i]}: "))
-        zs.append(component_ratio * g)
-    zs.append(1 - g)  # Добавляем последний элемент (распределенное масло) в массив zs
-
+        while True:
+            component_ratio = float(input(f"Введите соотношение газа в изначальном состоянии {IDs[i]}: "))
+            if 0 <= component_ratio <= 1:
+                zs[IDs[i]] = [[component_ratio * g]]
+                break
+            else:
+                print("Некорректное соотношение газа. Пожалуйста, введите значение от 0 до 1.")
+    zs['Oil'] = [[1-g]]
+    print(zs)
+    '''
     T = read_data_from_file_lines('temperature.txt')
     t_min = T[0]  # начальная температура для оптимизации
     P = read_data_from_file_lines('pressure.txt')
     fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
     Fraction_R22, Fraction_R115 = fractions
+    '''
+    # Ввод экспериментальных данных
+    print('================Данные эксперимента================')
+    temperature_file = input("Введите название файла (путь) с температурой: ")
+    while not os.path.exists(temperature_file):
+        print("Файл с температурой не найден.")
+        temperature_file = input("Введите корректное название файла (путь) с температурой: ")
 
+    T = read_data_from_file_lines(temperature_file)
+    t_min = T[0]  # Начальная температура для оптимизации
+
+    pressure_file = input("Введите название файла (путь) с давлением: ")
+    while not os.path.exists(pressure_file):
+        print("Файл с давлением не найден.")
+        pressure_file = input("Введите корректное название файла с давлением: ")
+
+    P = read_data_from_file_lines(pressure_file)
+    print(P)
+
+    fractions = {}
+    for i in range(len(IDs) - 1):
+        while True:
+            file_path = input(f"Введите название файла (путь) с долями газа {IDs[i]}: ")
+            if not os.path.exists(file_path):
+                print(f"Ошибка: Файл '{file_path}' не существует.")
+            else:
+                fraction_data = read_data_from_file_lines(file_path)
+                fractions[IDs[i]] = fraction_data
+                break
+    print(fractions)
+    ''''
     # Молярная масса хладагента R-22
     r22 = Chemical(IDs[0])
     M_r22 = round(r22.MW, 2)  #86.47
@@ -65,9 +109,17 @@ if __name__ == "__main__":
     # Молярная масса хладагента R-115
     r115 = Chemical(IDs[1])
     M_r115 = round(r115.MW, 2)  #154.47
+    '''
 
     # Критические параметры масла:
     print('================Критические параметры масла================')
+    while True:
+        try:
+            oil_name = str(input("Введите название масла: "))
+            break
+        except ValueError:
+            print("Ошибка: Некорректный ввод. Проверьте правильность вводимого значения.")
+
     while True:
         try:
             M_oil = float(input("Введите молярную массу масла: "))
@@ -93,21 +145,32 @@ if __name__ == "__main__":
     T_oil = 800  # Кельвины
     P_oil = 950e3  # Па
     '''
+    # Молярная масса хладагентов
+    M_gas = {}
+    for i in range(len(IDs) - 1):
+        gas = Chemical(IDs[i])
+        M_gas[IDs[i]] = round(gas.MW, 2)
+    M_gas_with_oil = {**M_gas, 'Oil': M_oil}  # Словарь для газов с маслом
+
     # Расчет ацентрического фактора по корреляции Ли и Кесслера
     omega = calculate_acentrick_factor(T_oil, P_oil, M_oil)
 
+    '''
     # Расчет мольных долей для каждого экспериментального компонента системы
-    mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(
-        Fraction_R22, Fraction_R115, M_r22, M_r115, M_oil
-    )
+    mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(fractions, M_gas, M_oil)
+    '''
+
+    # Расчет мольных долей для каждого экспериментального компонента системы
+    mole_fractions_experiment = mass_fractions_to_mole_fractions(fractions, M_gas, M_oil)
+    print(mole_fractions_experiment)
 
     # Расчет мольных долей для каждого компонента системы реализуемой программы
-    zs_r22_mole, zs_r115_mole, zs_oil_mole = mass_fractions_to_mole_fractions(
-        [[zs[0]]], [[zs[1]]], M_r22, M_r115, M_oil
-    )
-    zs_mole = [zs_r22_mole[0][0], zs_r115_mole[0][0], zs_oil_mole[0][0]]
-
-    oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega)
+    mole_fractions_model = mass_fractions_to_mole_fractions(zs, M_gas_with_oil, M_oil)
+    zs_mole = list(mole_fractions_model.values())
+    # print(zs_mole)
+    '''
+    # ВОТ ЗДЕСЬ ТЫ ОСТАНОВИЛСЯ, ДАЛЬШЕ ОПТИМАЙЗЕР И ВЫВОД
+    oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega, oil_name)
 
     #Перезаписали данные последнего элемента под масло
     chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
@@ -233,9 +296,10 @@ if __name__ == "__main__":
     Avg_error_R22 = sum_R22 / count
     Avg_error_R115 = sum_R115 / count
 
-    print('****** Средняя погрешность ******')
+    print('****** Средняя абсолютная погрешность ******')
     print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22 * 100, 2), '%')
     print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115 * 100, 2), '%')
 
 # Сохраняем файл Excel
 workbook.save("result_PR.xlsx")
+'''
