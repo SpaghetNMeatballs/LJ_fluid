@@ -51,37 +51,33 @@ def mass_fractions_to_mole_fractions(fractions, M_gas, M_oil):
     max_length = len(fractions[gas_keys[0]])
 
     for key in gas_keys:
-        mole_fractions[key] = []
-
-    mole_fractions['Oil'] = []
-
-    # Получение длины вложенных списков для первого ключа
-    nested_lengths = [len(fractions[gas_keys[0]][i]) for i in range(max_length)]
+        mole_fractions[key] = []  # Инициализация каждого значения ключа как пустой список
+    mole_fractions['Oil'] = []  # Инициализация значения 'Oil' как пустой список
 
     for i in range(max_length):
-        mole_fractions_row = []
-        nested_length = nested_lengths[i]  # Длина текущего вложенного списка
-
-        for j in range(nested_length):
-            oil_fraction = round(1 - sum(fractions[key][i][j] for key in gas_keys), 1)
-            mole_fractions_row_gas = {}
+        mole_fractions_row_gas = {}
+        for key in gas_keys:
+            mole_fractions_row_gas[key] = []
+        mole_fractions_row_oil = []  # Инициализация списка мольных долей масла для текущей итерации
+        for j in range(len(fractions[gas_keys[0]][i])):
+            oil_fraction = (1 - sum(fractions[key][i][j] for key in gas_keys))
             total_moles = 0
 
             for key in gas_keys:
                 fraction = fractions[key][i][j]
                 n = fraction / M_gas[key]
-                mole_fractions_row_gas[key] = n
+                mole_fractions_row_gas[key].append(n)
                 total_moles += n
 
             n_oil = oil_fraction / M_oil
             total_moles += n_oil
-            mole_fractions_row_gas['Oil'] = n_oil / total_moles
+            mole_fractions_row_oil.append(n_oil / total_moles)  # Расчет мольной доли масла
 
-            mole_fractions_row.append([mole_fractions_row_gas[key] / total_moles for key in gas_keys])
-
+            for key in gas_keys:
+                mole_fractions_row_gas[key][j] = mole_fractions_row_gas[key][j] / total_moles
         for key in gas_keys:
-            mole_fractions[key].append(mole_fractions_row.copy())
-        mole_fractions['Oil'].append(mole_fractions_row.copy())
+            mole_fractions[key].append(mole_fractions_row_gas[key])
+        mole_fractions['Oil'].append(mole_fractions_row_oil)  # Добавление списка мольных долей масла для текущей итерации
 
     return mole_fractions
 

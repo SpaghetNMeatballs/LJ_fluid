@@ -12,6 +12,7 @@ from functions.chemical_functions import mass_fractions_to_mole_fractions, calcu
 from functions.read_func import read_data_from_file_lines
 from thermo.chemical import Chemical
 import openpyxl
+import itertools
 
 if __name__ == "__main__":
 
@@ -48,7 +49,6 @@ if __name__ == "__main__":
             print(f"Ошибка: Вещество '{element}' отсутствует в библиотеке, возможно имеет другое название.")
             continue
         IDs.append(element)
-    # print("Введенные элементы списка IDS:", IDs)
 
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
     # g = 0.7
@@ -63,15 +63,8 @@ if __name__ == "__main__":
                 break
             else:
                 print("Некорректное соотношение газа. Пожалуйста, введите значение от 0 до 1.")
-    zs['Oil'] = [[1-g]]
-    print(zs)
-    '''
-    T = read_data_from_file_lines('temperature.txt')
-    t_min = T[0]  # начальная температура для оптимизации
-    P = read_data_from_file_lines('pressure.txt')
-    fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
-    Fraction_R22, Fraction_R115 = fractions
-    '''
+    # print(zs)
+
     # Ввод экспериментальных данных
     print('================Данные эксперимента================')
     temperature_file = input("Введите название файла (путь) с температурой: ")
@@ -88,7 +81,7 @@ if __name__ == "__main__":
         pressure_file = input("Введите корректное название файла с давлением: ")
 
     P = read_data_from_file_lines(pressure_file)
-    print(P)
+    # print(P)
 
     fractions = {}
     for i in range(len(IDs) - 1):
@@ -100,16 +93,7 @@ if __name__ == "__main__":
                 fraction_data = read_data_from_file_lines(file_path)
                 fractions[IDs[i]] = fraction_data
                 break
-    print(fractions)
-    ''''
-    # Молярная масса хладагента R-22
-    r22 = Chemical(IDs[0])
-    M_r22 = round(r22.MW, 2)  #86.47
-
-    # Молярная масса хладагента R-115
-    r115 = Chemical(IDs[1])
-    M_r115 = round(r115.MW, 2)  #154.47
-    '''
+    # print(fractions)
 
     # Критические параметры масла:
     print('================Критические параметры масла================')
@@ -155,58 +139,62 @@ if __name__ == "__main__":
     # Расчет ацентрического фактора по корреляции Ли и Кесслера
     omega = calculate_acentrick_factor(T_oil, P_oil, M_oil)
 
-    '''
-    # Расчет мольных долей для каждого экспериментального компонента системы
-    mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(fractions, M_gas, M_oil)
-    '''
-
     # Расчет мольных долей для каждого экспериментального компонента системы
     mole_fractions_experiment = mass_fractions_to_mole_fractions(fractions, M_gas, M_oil)
-    print(mole_fractions_experiment)
+    # print(mole_fractions_experiment)
 
     # Расчет мольных долей для каждого компонента системы реализуемой программы
-    mole_fractions_model = mass_fractions_to_mole_fractions(zs, M_gas_with_oil, M_oil)
-    zs_mole = list(mole_fractions_model.values())
+    mole_fractions_model = mass_fractions_to_mole_fractions(zs, M_gas, M_oil)
+
+    # Перевод в одномерный список
+    zs_mole = list(itertools.chain.from_iterable(mole_fractions_model.values()))
+    zs_mole = flat_list = sum(zs_mole, [])
     # print(zs_mole)
-    '''
-    # ВОТ ЗДЕСЬ ТЫ ОСТАНОВИЛСЯ, ДАЛЬШЕ ОПТИМАЙЗЕР И ВЫВОД
-    oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega, oil_name)
+
+    oil = Oil(M_oil, T_oil, P_oil, omega, oil_name)
 
     #Перезаписали данные последнего элемента под масло
-    chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
+    chemical_constants = create_constants_package(oil, IDs)
 
     # ================= Оптимизация коэффициентов =================
     # Оптимизируемые коэффициенты для R-22 и R-115
-    initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
-    flash_calculator = FlashCalculator(flash_class, oil_PRMIX, chemical_constants_PR, initial_guess_k13_k23, zs_mole, t_min)
-    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115],
-                                                  T, P, zs_mole)
-
-    # Счетчик точек и суммы концентраций
-    count = 0
-    sum_R22 = 0
-    sum_R115 = 0
+    initial_guess = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
+    flash_calculator = FlashCalculator(flash_class, oil, chemical_constants, initial_guess, zs_mole, t_min)
+    result = flash_calculator.optimize_parameters(initial_guess, mole_fractions_experiment, T, P, zs_mole)
 
     workbook = openpyxl.Workbook()
     sheet = workbook.active
 
-    # Записываем заголовки в файл Excel
-    sheet.append(
-        ['Т(°C)', 'P(кПа)', 'x_R-22(модел.)', 'х_R-115(модел.)', 'х_ISO 32(модел.)', 'x_R-22(эксп.)', 'x_R-115(эксп.)',
-         'x_ISO 32(эксп.)',
-         'Aбс.ошибка R-22', 'Абс.ошибка R-115'])
+    # Создание заголовков (CДЕЛАНО)
+    headers = ['Т(°C)', 'P(кПа)'] + [f'x_{element}(модел.)' if element != IDs[-1] else 'x_масло(модел.)' for element in IDs] + \
+              [f'x_{element}(эксп.)' if element != IDs[-1] else 'x_масло(эксп.)' for element in IDs] + \
+              [f'Aбс.ошибка {element}' for element in IDs[:-1]]
+    sheet.append(headers)
+
+    count = 0  # Счетчик точек
+    sum_dict = {key: 0 for key in M_gas.keys()}  # Общие суммы ошибок
 
     # Цикл расчета вспышки и ошибок
     for i in range(len(T)):
-        countT = 0
-        sum_R22T = 0
-        sum_R115T = 0
-        # Массивы данных концентраций газов, давления
-        R22_plot = []
-        R115_plot = []
+        count_current_t = 0
+        # Словарь сумм ошибок долей на текущей температуре
+        sum_dict_current_t = {key: 0 for key in M_gas.keys()}
+
+        # Средняя ошибка для каждой температуры
+        Avg_error_current_t = {key: 0 for key in M_gas.keys()}
+
+        # Массивы данных концентраций газов
+        Gases_dict = {}
+        for key in M_gas.keys():
+            Gases_dict[key] = []
+
+        # Создаем список под давления эксперимента
         P_bar_plot = []
-        Fraction_R22_plot = []
-        Fraction_R115_plot = []
+        # Создаем словарь для экспериментальных значений газов эксперимента
+        Gases_dict_exp = {}
+        for key in M_gas.keys():
+            Gases_dict_exp[key] = []
+
         for j in range(len(P[i])):
             # Вызов функции для получения мольных долей, температуры и давления
             flash_data = flash_calculator.calculate_flash(T[i], P[i][j])
@@ -214,92 +202,100 @@ if __name__ == "__main__":
                 print('================ПРИСУТСТВУЕТ ТОЛЬКО ПАР================')
                 print('Температура расчета:', T[i], '°C')
                 print('Давление расчета:', P[i][j], 'Бар')
-                print('Соотношение компонентов смеси в газе R-22, R-115, ISO 32:\n', flash_data[0], '\n')
+                components = ', '.join([f'{key}: {value}' for key, value in zip(M_gas_with_oil.keys(), flash_data[0])])
+                print(f'Соотношение компонентов смеси {components}')
                 print('Пар:', flash_data[3], '\n')
                 # Обнуляем наши значения долей, если присутствует только пар
-                flash_data[0][0] = 0.0
-                flash_data[0][1] = 0.0
+                for ind in range(len(flash_data[0])):
+                    flash_data[0][ind] = 0
             else:
                 print('================================================================================')
                 print('Температура расчета:', T[i], '°C')
                 print('Давление расчета:', P[i][j], 'Бар')
-                print('Соотношение компонентов смеси R-22, R-115, ISO 32:', flash_data[0])
+                components = ', '.join([f'{key}: {value}' for key, value in zip(M_gas_with_oil.keys(), flash_data[0])])
+                print(f'Соотношение компонентов смеси {components}')
                 print('Пар:', flash_data[3], '\n')
 
-            # Добавление точек в листы
-            R22_plot.append(flash_data[0][0])
-            R115_plot.append(flash_data[0][1])
+            # Добавление точек модели в словарь
+            for idx, key in enumerate(M_gas.keys()):
+                Gases_dict[key].append(flash_data[0][idx])
+
+            # Добавляем давление процесса
             P_bar_plot.append(P[i][j])
             # Экспериментальные (исходные) данные
-            Fraction_R22_plot.append(mole_fractions_r22[i][j])
-            Fraction_R115_plot.append(mole_fractions_r115[i][j])
+            for key in M_gas.keys():
+                Gases_dict_exp[key].append(mole_fractions_experiment[key][i][j])
 
-            # Абсолютные ошибки
-            ABS_error_R22 = abs(mole_fractions_r22[i][j] - flash_data[0][0])
-            ABS_error_R115 = abs(mole_fractions_r115[i][j] - flash_data[0][1])
-
-            # Относительные ошибки
-            Rel_error_R22 = ABS_error_R22 / mole_fractions_r22[i][j]
-            Rel_error_R115 = ABS_error_R115 / mole_fractions_r115[i][j]
+            # Расчет ошибок
+            ABS_error = {key: 0 for key in M_gas.keys()}
+            Rel_error = {key: 0 for key in M_gas.keys()}
+            for idx, key in enumerate(M_gas.keys()):
+                # Абсолютные ошибки
+                ABS_error[key] = abs(mole_fractions_experiment[key][i][j] - flash_data[0][idx])
+                # Относительные ошибки
+                Rel_error[key] = ABS_error[key] / mole_fractions_experiment[key][i][j]
 
             # Счетчик точек
             count += 1
-            countT += 1
-            sum_R22T += ABS_error_R22
-            sum_R115T += ABS_error_R115
+            count_current_t += 1
 
-            sum_R22 += ABS_error_R22
-            sum_R115 += ABS_error_R115
+            # Расчет сумм абсолютных ошибок по температуре
+            for key in M_gas.keys():
+                sum_dict_current_t[key] += ABS_error[key]
+                sum_dict[key] += sum_dict_current_t[key]
 
+            # Вывод абсолютных ошибок
             print('****** Абсолютная погрешность ******')
-            print('Погрешность для R-22:', ABS_error_R22)
-            print('Погрешность для R-115:', ABS_error_R115, '\n')
+            for key in M_gas.keys():
+                print(f'Погрешность для {key}: {ABS_error[key]}')
+
+            # Вывод относительных ошибок
             print('****** Относительная погрешность ******')
-            print('Погрешность для R-22:', Rel_error_R22)
-            print('Погрешность для R-115:', Rel_error_R115, '\n')
+            for key in M_gas.keys():
+                print(f'Погрешность для {key}: {Rel_error[key]}')
+            print()
 
             # Добавляем данные в файл Excel
             sheet.append([
                 T[i],
-                P[i][j],
-                float(flash_data[0][0]),
-                float(flash_data[0][1]),
-                float(flash_data[0][2]),
-                mole_fractions_r22[i][j], mole_fractions_r115[i][j], mole_fractions_oil[i][j],
-                float(ABS_error_R22), float(ABS_error_R115)
-            ])
+                P[i][j]] +
+                [float(flash_data[0][ind]) for ind in range(len(zs_mole))] +
+                [mole_fractions_experiment[key][i][j] for key in M_gas_with_oil] +
+                [ABS_error[key] for key in M_gas])
 
+        print('****** Cписок значений kijs ******')
         print('****** Значения kijs ******')
-        print('k12=', flash_data[4])
-        print('k13=', flash_data[5])
-        print('k23=', flash_data[6], '\n')
+        for idx, k in enumerate(flash_data[4], start=1):
+            print(f'k{idx} =', k)
 
         # Средняя ошибка для каждой температуры
-        Avg_error_R22T = sum_R22T / countT
-        Avg_error_R115T = sum_R115T / countT
+        for key in M_gas.keys():
+            Avg_error_current_t[key] = sum_dict_current_t[key] / count_current_t
 
         # Построение графика
         plt.title('График зависимости x от P при Т=' + str(T[i]) + '°C', fontsize=18,
                   fontname='Times New Roman')
         plt.xlabel('P, бар', fontsize=18)
         plt.ylabel('x, мольн. доля', fontsize=18)
-        plt.scatter(P_bar_plot, R22_plot)
-        plt.scatter(P_bar_plot, R115_plot)
-        plt.scatter(P_bar_plot, Fraction_R22_plot)
-        plt.scatter(P_bar_plot, Fraction_R115_plot)
-        plt.plot(P_bar_plot, R22_plot)
-        plt.plot(P_bar_plot, R115_plot)
-        plt.legend(['R-22 модел.', 'R-115 модел.', 'R-22 эксп.', 'R-115 эксп.'])
+        legend_labels = []
+        for key in M_gas.keys():
+            plt.scatter(P_bar_plot, Gases_dict[key])
+            plt.scatter(P_bar_plot, Gases_dict_exp[key])
+            plt.plot(P_bar_plot, Gases_dict[key])
+            legend_labels.append(f'{key} модел.')
+            legend_labels.append(f'{key} эксп.')
+        plt.legend(legend_labels)
         plt.show()
 
     # Средняя ошибка общая
-    Avg_error_R22 = sum_R22 / count
-    Avg_error_R115 = sum_R115 / count
+    Avg_error = {key: 0 for key in M_gas.keys()}
+    for key in M_gas.keys():
+        Avg_error[key] = sum_dict[key] / count
 
     print('****** Средняя абсолютная погрешность ******')
-    print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22 * 100, 2), '%')
-    print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115 * 100, 2), '%')
+    for key in M_gas.keys():
+        print(f'Погрешность для {key} в процентах:', round(Avg_error[key] * 100, 2), '%')
 
-# Сохраняем файл Excel
-workbook.save("result_PR.xlsx")
-'''
+# Сохранение файла (СДЕЛАНО)
+filename = f'{flash_class.__name__}_{len(zs)}_gas.xlsx'.replace("<", "").replace(">", "").replace("'", "")
+workbook.save(filename)

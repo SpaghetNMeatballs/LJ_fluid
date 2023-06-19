@@ -1,24 +1,15 @@
-fractions = {
-    'Gas1': [
-        [0.3, 0.2, 0.5],
-        [0.1, 0.4, 0.5],
-        [0.2, 0.3, 0.5]
-    ],
-    'Gas2': [
-        [0.4, 0.5, 0.1],
-        [0.2, 0.3, 0.5],
-        [0.3, 0.1, 0.6]
-    ]
+# Пример словаря M_gas_with_oil
+M_gas_with_oil = {
+    'R-22': 43,
+    'R-115': 22,
+    'ISO 32': 3
 }
 
-first_key = list(fractions.keys())[0]
-num_elements = len(fractions[first_key][0])
+# Пример значения flash_data
+flash_data = [0.4, 0.3, 0.3]
 
-oil_fractions = []
+# Формирование строки соотношения компонентов
+components = ', '.join([f'{key}: {value}' for key, value in zip(M_gas_with_oil.keys(), flash_data)])
 
-for i in range(len(fractions[first_key])):
-    for j in range(num_elements):
-        oil_fraction = round(1 - sum(fractions[key][i][j] for key in fractions), 1)
-        oil_fractions.append(oil_fraction)
-
-print(oil_fractions)
+# Вывод строки
+print(f'Соотношение компонентов смеси {components}')
