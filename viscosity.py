@@ -3,7 +3,7 @@ from numpy import arange, array, zeros
 from scipy.optimize import minimize
 import matplotlib
 from calc_functions import DEF, HG, grunberg_nissan, lederer_roegiers, arrhenius, kendall_monroe, refutas
-from common import Point, ViscData, aad, aad_new, create_frac_calc, create_frac_calc_2comp, normalise, mole_to_mass
+from common import Point, ViscData, aad, aad_new, create_frac_calc, create_frac_calc_2comp, normalize, mole_to_mass
 from data_csv.cavestri_loader import get_data
 from Flashers_and_classes.classes import FlashCalculator
 from density import Density
@@ -76,7 +76,7 @@ class LedererRoegiers:
     def calc(self, t: float, p: float):
         visc_parts = [self.vft_solvers[i].calc_visc(t, p) for i in range(self.components_amount)]
         moles = self.frac_solver.calculate_flash(t, p)
-        last_visc = lederer_roegiers(self.params[0], normalise(moles[:2]), visc_parts[2:])
+        last_visc = lederer_roegiers(self.params[0], normalize(moles[:2]), visc_parts[2:])
         last_mole = sum(moles[:2])
         partitions = self.components_amount - 2
         for i in range(partitions):
@@ -99,7 +99,7 @@ def main_visc_check():
     print(
         f'D = {test.params[0]}\nE = {test.params[1]}\nF = {test.params[2]}\nG = {test.params[3:6]}\nH = {test.params[6]}')
 
-    font = {'family': 'Times New Roman', 'size': 14}
+    font = {'family': 'Times New Roman', 'size': 20}
     matplotlib.rc('font', **font)
     fig, ax = plt.subplots()
     ax.scatter(temps, viscs, label="Экспериментальные данные")
@@ -108,7 +108,7 @@ def main_visc_check():
     viscs_temp = [test.calc_visc_def(i) for i in arange(temps[0], temps[-1] + 1)]
     ax.plot(arange(temps[0], temps[-1] + 1), viscs_calc, "r",
             label="Расчётные значения")
-    ax.set_ylabel("$\it{Вязкость, сантипуаз}$")
+    ax.set_ylabel("$\it{Вязкость, сП}$")
     ax.set_xlabel('$\it{T, °C}$')
     plt.grid()
     plt.legend()
@@ -122,13 +122,13 @@ def oil_coeff_calc():
     oil_calc = VFT()
     oil_calc.setup_def({t_arr[i]: rho_arr[i] for i in range(len(t_arr))})
     print(oil_calc.params)
-    font = {'family': 'Times New Roman', 'size': 14}
+    font = {'family': 'Times New Roman', 'size': 20}
     matplotlib.rc('font', **font)
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
     ax.plot(t_calc, [oil_calc.calc_visc_def(i) for i in t_calc], "r", label="Расчётные значения")
-    ax.set_ylabel("$\it{Вязкость, сантипуаз}$")
-    ax.set_xlabel('$\it{P, бар}$')
+    ax.set_ylabel("$\it{Вязкость, сП}$")
+    ax.set_xlabel('$\it{T, °C}$')
     plt.yscale('log')
     plt.grid()
     plt.legend()
@@ -137,7 +137,7 @@ def oil_coeff_calc():
 
 def mix_visc_check():
     t_list = [-10, 0, 20, 40, 70, 80, 125]
-    display_t = 20
+    display_t = 70
     step = 0.1
     '''visc_r115 = data_r115.visc_d
     visc_r22 = data_r22.visc_d
@@ -227,7 +227,7 @@ def mix_visc_check():
 
         # mu_refr_list = [mu_r22_p, mu_r115_p]
         # mu_refr = arrhenius(lr_params[0], mu_refr_list, normalise(mole_frac[:2]))
-        visc_calc.append(grunberg_nissan(params_gn, [mu_r22_p, mu_oil_p, mole_frac[0], mole_frac[1]]))
+        visc_calc.append(arrhenius([v_r22_p, v_oil_p, mole_frac[0], mole_frac[1]]))
         # visc_calc.append(lederer_roegiers(alpha, [mu_r22_p, mu_oil_p, mole_frac[0], mole_frac[1]]))
     print("Calculation complete, initiating plotting")
 
@@ -257,17 +257,17 @@ def mix_visc_check():
             # mu_refr_list = [mu_r22_p, mu_r115_p]
             # mu_refr = arrhenius(lr_params[0], mu_refr_list, normalise(mole_frac[:2]))
             # visc_calc.append(arrhenius(lr_params[1], [mu_refr, mu_oil_p], [sum(mole_frac[:2]), mole_frac[2]]))
-            x_calc.append(grunberg_nissan(params_gn, [mu_r22_p, mu_oil_p, mole_frac[0], mole_frac[1]]))
+            x_calc.append(arrhenius([mu_r22_p, mu_oil_p, mole_frac[0], mole_frac[1]]))
         print(f'AAD для t={t_cur}:\t{aad(x_exp, x_calc)}')
 
-    font = {'family': 'Times New Roman', 'size': 14}
+    font = {'family': 'Times New Roman', 'size': 20}
     matplotlib.rc('font', **font)
     fig, ax = plt.subplots()
     ax.scatter(p_scatter, mu_scatter, label="Экспериментальные данные")
     ax.plot(p_calc, visc_calc, "r", label="Расчётные значения")
     # ax.plot(arange(temps[0], temps[-1] + 1), viscs_calc, "r",
     #        label="Расчётные значения")
-    ax.set_ylabel("$\it{Вязкость, сантипуаз}$")
+    ax.set_ylabel("$\it{Вязкость, сП}$")
     ax.set_xlabel('$\it{P, бар}$')
     plt.grid()
     plt.legend()

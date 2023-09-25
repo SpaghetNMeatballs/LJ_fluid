@@ -94,32 +94,32 @@ class DensityParedes:
 
 
 def rho_test():
-    substance = "R22"
+    substance = "R115"
     substance_data = ViscData(substance)
     points_to_process = substance_data.points
     points = [[i.p, i.t] for i in points_to_process]
     rho = [i.rho for i in points_to_process]
     point0 = points_to_process[int(len(points_to_process) / 2)]
+    graph_p = 0.04
     density_calc = Density(point0)
     if not density_calc.setup_rho_full(rho, points):
         print('Error while optimizing')
-
     print(f'rho0 = {density_calc.point0.rho}\nt0 = {density_calc.point0.t}\np0 = {density_calc.point0.p}')
     print("Beta = %f" % density_calc.beta)
     print("E = %f" % density_calc.e)
     static_params = (density_calc.point0.rho, density_calc.point0.p, density_calc.point0.t)
-    t_arr = [i.t for i in substance_data.get_by_pressure(point0.p)]
-    rho_arr = [i.rho for i in substance_data.get_by_pressure(point0.p)]
+    t_arr = [i.t for i in substance_data.get_by_pressure(graph_p)]
+    rho_arr = [i.rho for i in substance_data.get_by_pressure(graph_p)]
     t_calc = arange(min(t_arr), max(t_arr) + 0.1, 0.1)
     print(f'AAD = {aad_new([3, 0], rho_full, points, rho, static_params)}%')
-    font = {'family': 'Times New Roman', 'size': 14}
+    font = {'family': 'Times New Roman', 'size': 20}
     matplotlib.rc('font', **font)
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
     ax.plot(t_calc, [density_calc.calc_rho_full(Point(t=i, p=point0.p)) for i in t_calc], "r",
             label="Расчётные значения")
-    ax.set_ylabel("Rho, м3/кг")
-    ax.set_xlabel("P, МПа")
+    ax.set_ylabel("ρ, кг/м³")
+    ax.set_xlabel("T, °C")
     plt.grid()
     plt.legend()
     plt.show()
@@ -134,7 +134,7 @@ def rho_oil_tait():
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
     ax.plot(t_calc, [rho_calc.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
-    ax.set_ylabel("Rho, м3/кг")
+    ax.set_ylabel("ρ, кг/м³")
     ax.set_xlabel("P, МПа")
     plt.legend()
     plt.show()
@@ -149,14 +149,14 @@ def rho_oil():
     rho_calc.setup_rho_t(point_list, 4)
     print(rho_calc.beta)
     print(aad_new(rho_calc.beta, rho_t, t_arr, rho_arr, [rho_calc.point0.rho, rho_calc.point0.t]))
-    font = {'family': 'Times New Roman', 'size': 14}
+    font = {'family': 'Times New Roman', 'size': 20}
     matplotlib.rc('font', **font)
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
     ax.plot(t_calc, [rho_calc.calc_rho_t(i) for i in t_calc], "r", label="Расчётные значения")
-    ax.set_ylabel("Rho, м3/кг")
+    ax.set_ylabel("ρ, кг/м³")
     plt.grid()
-    ax.set_xlabel("P, МПа")
+    ax.set_xlabel("T, °C")
     plt.legend()
     plt.show()
 
@@ -187,11 +187,11 @@ def rho_paredes_test():
     matplotlib.rc('font', **font)
     ax.plot(t_calc, [test.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
     ax.scatter(t_exp, rho_exp, label="Экспериментальные данные")
-    ax.set_ylabel("$\it{Плотность, кг/м3}$")
+    ax.set_ylabel("$\it{ρ, кг/м³}$")
     ax.set_xlabel('$\it{T, °C}$')
     plt.legend()
     plt.show()
 
 
 if __name__ == "__main__":
-    rho_oil()
+    rho_test()

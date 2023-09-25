@@ -98,7 +98,8 @@ class FlashCalculator:
         PT = flasher.flash(T=t + 273.15, P=p * pow(10, 5), zs=self.fractions)
 
         if PT.VF == 1:  # Есть только пар
-            return [PT.gas.zs, t, p, PT.VF, k12] + ([k13, k23] if len(self.fractions) == 3 else [])
+            raise Exception('Замечен пар')
+            # return [PT.gas.zs, t, p, PT.VF, k12] + ([k13, k23] if len(self.fractions) == 3 else [])
         else:  # Не только пар
             return [PT.liquid0.zs, t, p, PT.VF, k12] + ([k13, k23] if len(self.fractions) == 3 else [])
 

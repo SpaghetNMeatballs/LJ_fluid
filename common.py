@@ -214,13 +214,13 @@ def aad_new(params: list[float], func: callable, points: list, exp: list[float],
             calc.append(func(params, static_params, points[i]))
 
     for i in range(len(points)):
-        result += abs((log(exp[i]) - log(calc[i])))
+        result += abs(exp[i] - calc[i]) / exp[i]
 
     result *= 100 / len(points)
     return result
 
 
-def normalise(to_process: list[float]) -> list[float]:
+def normalize(to_process: list[float]) -> list[float]:
     summ = sum(to_process)
     result = [i / summ for i in to_process]
     return result
