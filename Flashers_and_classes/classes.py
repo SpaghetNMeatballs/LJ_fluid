@@ -25,13 +25,13 @@ class FlashCalculator:
         for i in range(len(t)):
             for j in range(len(p[i])):
                 if len(zs) == 3:
-                    k13, k23, k12 = [params[ind] + (t[i] - t[0]) * params[ind + 1] for ind in
+                    k13, k23, k12 = [params[ind] + (t[i] - self.t_min) * params[ind + 1] for ind in
                                      range(0, 5, 2)]
                     kijs = [[0, k12, k13],
                             [k12, 0, k23],
                             [k13, k23, 0]]
                 elif len(zs) == 2:
-                    k12 = params[0] + (t[i] - t[0]) * params[1]
+                    k12 = params[0] + (t[i] - self.t_min) * params[1]
                     kijs = [[0, k12],
                             [k12, 0]]
 
