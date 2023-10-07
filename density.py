@@ -7,24 +7,30 @@ from numpy import arange
 
 
 class Density:
-    def __init__(self, point0: Point):
-        self.point0 = point0
+    def __init__(self, t0: float, p0: float, rho0: float):
+        self.t0 = t0
+        self.p0 = p0
+        self.rho0 = rho0
         self.beta = 0
         self.e = 6.089e13
 
     def calc_rho_t(self, t: float) -> float:
-        return rho_t(self.beta, [self.point0.rho, self.point0.t], t)
+        return rho_t(self.beta, [self.rho0, self.t0], t)
 
     def calc_rho_p(self, p: float) -> float:
-        return rho_p(self.beta, [self.point0.rho, self.point0.p], p)
+        return rho_p(self.beta, [self.rho0, self.p0], p)
 
-    def calc_rho_full(self, point: Point) -> float:
-        p = point.p
-        t = point.t
-        return rho_full([self.e, self.beta], [self.point0.rho, self.point0.p, self.point0.t], [p, t])
+    def calc_rho_full(self, t: float, p: float) -> float:
+        if p is not None and t is not None:
+            return rho_full([self.e, self.beta], [self.rho0, self.p0, self.t0], [p, t])
+        if p is not None:
+            return self.calc_rho_p(p)
+        if t is not None:
+            return self.calc_rho_t(t)
+        raise Exception("Both pressure and temperature are Null")
 
     def setup_rho_t(self, points: list[Point], p0_ind: int) -> bool:
-        if self.point0:
+        if self.rho0 and self.t0 and self.p0:
             assert self.point0 == points[p0_ind], "Wrong data passed"
         self.point0 = points[p0_ind]
         temps = [i.t for i in points]
