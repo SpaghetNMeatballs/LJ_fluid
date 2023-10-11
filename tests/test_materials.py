@@ -48,4 +48,8 @@ def test_calc_amount(no_solvers, dens_solver, k_solver, v_solver, dens_k_solver,
     assert dens_v_solver.get_calc_amount() == 2
     assert full_solver.get_calc_amount() == 3
 
-def test_calc_amount
+
+def test_fill_func(no_solvers):
+    assert no_solvers.fill_values([None, 1, 2]) == [2, 1, 2]
+    assert no_solvers.fill_values([10, None, 5]) == [10, 2, 5]
+    assert no_solvers.fill_values([10, 2, None]) == [10, 2, 5]

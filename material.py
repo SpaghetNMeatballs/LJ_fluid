@@ -41,8 +41,8 @@ class Material:
             case 1:
                 val_list[1] = val_list[0] / val_list[2]
             case 2:
-                val_list[2] = val_list[]
-
+                val_list[2] = val_list[0] / val_list[1]
+        return val_list
 
     # Returns list of [d_visc, k_visc, density]
     def calc_prop(self, t: float, p: float = None) -> list[float]:
@@ -62,8 +62,4 @@ class Material:
         if self.density is not None:
             result[2] = self.density.calc_rho_full(Point(t=t, p=p))
 
-        transfer_funcs = [lambda x: x[1] * x[2], lambda x: x[0] / x[2], lambda x: x[1] / x[0]]
-        if None in result:
-            none_ind = result.index(None)
-            result[none_ind] = transfer_funcs[none_ind](result)
-        return result
+        return self.fill_values(result)
