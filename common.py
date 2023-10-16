@@ -226,6 +226,22 @@ def normalize(to_process: list[float]) -> list[float]:
     return result
 
 
+# Заполняет None значение в листе [динамическая вязкость, кинематическая вязкость, плотность]
+# Fills missing values of [d_visc, k_visc, dens] list
+def fill_values(val_list: list[float | None]) -> list[float]:
+    if None not in val_list:
+        return val_list
+    none_ind = val_list.index(None)
+    match none_ind:
+        case 0:
+            val_list[0] = val_list[1] * val_list[2]
+        case 1:
+            val_list[1] = val_list[0] / val_list[2]
+        case 2:
+            val_list[2] = val_list[0] / val_list[1]
+    return val_list
+
+
 if __name__ == "__main__":
     test_calc = create_frac_calc()
     print(test_calc.calculate_flash(-10, 3.38)[0])

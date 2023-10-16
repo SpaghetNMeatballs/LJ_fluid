@@ -9,7 +9,6 @@ from Flashers_and_classes.classes import FlashCalculator, create_constants_packa
 from functions.read_func import read_data_from_file_lines
 
 if __name__ == "__main__":
-
     # Соотношение R-22 к R-115
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
     g = 0.8

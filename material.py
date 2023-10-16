@@ -1,6 +1,6 @@
 from density import Density
 from viscosity import VFT
-from common import Point
+from common import Point, fill_values
 
 
 class Material:
@@ -14,6 +14,7 @@ class Material:
             result += 1
         return result
 
+    # Заполняет None значение в листе [динамическая вязкость, кинематическая вязкость, плотность]
     def __assign_calculators(self, d_visc_calc: VFT = None, k_visc_calc: VFT = None, dens_calc: Density = None):
         if d_visc_calc:
             self.d_viscosity = d_visc_calc
@@ -30,21 +31,8 @@ class Material:
         if assign_flag:
             self.__assign_calculators(d_visc_calc, k_visc_calc, dens_calc)
 
-    # Fills missing values of [d_visc, k_visc, dens] list
-    def fill_values(self, val_list: list[float | None]) -> list[float]:
-        if None not in val_list:
-            return val_list
-        none_ind = val_list.index(None)
-        match none_ind:
-            case 0:
-                val_list[0] = val_list[1] * val_list[2]
-            case 1:
-                val_list[1] = val_list[0] / val_list[2]
-            case 2:
-                val_list[2] = val_list[0] / val_list[1]
-        return val_list
 
-    # Returns list of [d_visc, k_visc, density]
+    # Возвращает свойства смеси в порядке [динамическая вязкость, кинематическая вязкость, плотность]
     def calc_prop(self, t: float, p: float = None) -> list[float]:
         if self.get_calc_amount() < 2:
             raise Exception('Not enought solvers initialised')
@@ -62,4 +50,4 @@ class Material:
         if self.density is not None:
             result[2] = self.density.calc_rho_full(Point(t=t, p=p))
 
-        return self.fill_values(result)
+        return fill_values(result)

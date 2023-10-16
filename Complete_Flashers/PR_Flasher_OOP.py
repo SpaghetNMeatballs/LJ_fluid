@@ -12,7 +12,6 @@ from thermo.chemical import Chemical
 import openpyxl
 
 if __name__ == "__main__":
-
     # Соотношение R-22 к R-115
     # Общее соотношения газа к маслу с учетом распределительного коэффициента
     g = 0.7
