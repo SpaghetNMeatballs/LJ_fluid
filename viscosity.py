@@ -4,7 +4,7 @@ from scipy.optimize import minimize
 import matplotlib
 from calc_functions import DEF, HG, grunberg_nissan, lederer_roegiers, arrhenius, kendall_monroe, refutas
 from common import Point, ViscData, aad, aad_new, create_frac_calc, create_frac_calc_2comp, normalize, mole_to_mass
-from data_csv.cavestri_loader import get_data
+from data_csv import get_data
 from Flashers_and_classes.classes import FlashCalculator
 from density import Density
 
@@ -275,4 +275,4 @@ def mix_visc_check():
 
 
 if __name__ == "__main__":
-    mix_visc_check()
+    oil_coeff_calc()

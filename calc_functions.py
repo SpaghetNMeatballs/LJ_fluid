@@ -15,7 +15,10 @@ def HG(params: list[float], static_params: list[float], point: list[float]) -> f
     result = DEF([d, e, f], t)
     top = (p + g0 + g1 * t + g2 * t ** 2)
     bot = (pref + g0 + g1 * t + g2 * t ** 2)
-    second_part = (top / bot) ** h
+    try:
+        second_part = (top / bot) ** h
+    except ZeroDivisionError:
+        pass
     return result * second_part
 
 

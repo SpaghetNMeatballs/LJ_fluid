@@ -7,7 +7,8 @@ from numpy import arange
 
 
 class Density:
-    def __init__(self, t0: float, p0: float, rho0: float):
+    def __init__(self, point: Point):
+        t0, p0, rho0 = point.t, point.p, point.rho
         self.t0 = t0
         self.p0 = p0
         self.rho0 = rho0
