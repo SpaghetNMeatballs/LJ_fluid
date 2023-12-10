@@ -3,7 +3,10 @@ from dataclasses import dataclass
 from typing import Optional
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
 from functions.read_func import read_data_from_file_lines
-from functions.chemical_functions import mass_fractions_to_mole_fractions, calculate_acentrick_factor
+from functions.chemical_functions import (
+    mass_fractions_to_mole_fractions,
+    calculate_acentrick_factor,
+)
 from thermo import SRKMIX
 from thermo.chemical import Chemical
 from math import log
@@ -13,7 +16,7 @@ from math import log
 class Point:
     t: Optional[float] = None
     p: Optional[float] = None
-    x: Optional[list[float]] = None
+    x: Optional[float] = None
     mu: Optional[float] = None
     v: Optional[float] = None
     rho: Optional[float] = None
@@ -27,23 +30,28 @@ class Point:
             return False
         if self.rho != other.rho:
             return False
-        x_size = -1
-        o_size = -1
-        if self.x:
-            x_size = len(self.x)
-        if other.x:
-            o_size = len(other.x)
-        if x_size != o_size:
+        if self.x != other.x:
             return False
-        for i in range(x_size):
-            if self.x[i] != other.x[i]:
-                return False
         return True
 
 
-def mole_to_mass(mole_frac: list[float], mole_list: list[float]) -> list[float]:
+def mole_to_mass(mole_frac: list[float], mw_list: list[float]) -> list[float]:
+    assert len(mole_frac) == len(
+        mw_list
+    ), "Lengths of a list of fractions and a list of molar masses do not match"
     result = mole_frac.copy()
-    result = [result[i] * mole_list[i] for i in range(len(result))]
+    result = [result[i] * mw_list[i] for i in range(len(result))]
+    temp_sum = sum(result)
+    result = [result[i] / temp_sum for i in range(len(result))]
+    return result
+
+
+def mass_to_mole(mass_frac: list[float], mw_list: list[float]) -> list[float]:
+    assert len(mass_frac) == len(
+        mw_list
+    ), "Lengths of a list of fractions and a list of molar masses do not match"
+    result = mass_frac.copy()
+    result = [result[i] / mw_list[i] for i in range(len(result))]
     temp_sum = sum(result)
     result = [result[i] / temp_sum for i in range(len(result))]
     return result
@@ -52,11 +60,11 @@ def mole_to_mass(mole_frac: list[float], mole_list: list[float]) -> list[float]:
 def create_frac_calc_2comp() -> FlashCalculator:
     g = 0.55
     zs = [g, 1 - g]  # R-22, ISO 32
-    T = read_data_from_file_lines('temperature_r22.txt')
+    T = read_data_from_file_lines("temperature_r22.txt")
     t_min = T[0]  # начальная температура для оптимизации
-    P = read_data_from_file_lines('pressure_r22.txt')
-    Fraction_R22 = read_data_from_file_lines('fraction_r22_alone.txt')
-    IDs = ['r-22', 'water']
+    P = read_data_from_file_lines("pressure_r22.txt")
+    Fraction_R22 = read_data_from_file_lines("fraction_r22_alone.txt")
+    IDs = ["r-22", "water"]
 
     # Молярная масса хладагента R-22
     r22 = Chemical(IDs[0])
@@ -86,21 +94,27 @@ def create_frac_calc_2comp() -> FlashCalculator:
     # ================= Оптимизация коэффициентов =================
     # Оптимизируемые коэффициенты для R-22
     initial_guess_k13_k23 = [-0.1, 0.001]
-    flash_calculator = FlashCalculator(SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23, zs_mole, t_min)
-    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22],
-                                                  T, P, zs_mole)
+    flash_calculator = FlashCalculator(
+        SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23, zs_mole, t_min
+    )
+    result = flash_calculator.optimize_parameters(
+        initial_guess_k13_k23, [mole_fractions_r22], T, P, zs_mole
+    )
     return flash_calculator
 
 
 def create_frac_calc() -> FlashCalculator:
     g = 0.7
     zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
-    T = read_data_from_file_lines('temperature.txt')
+    T = read_data_from_file_lines("temperature.txt")
     t_min = T[0]  # начальная температура для оптимизации
-    P = read_data_from_file_lines('pressure.txt')
-    fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
+    P = read_data_from_file_lines("pressure.txt")
+    fractions = [
+        read_data_from_file_lines("fraction_r22.txt"),
+        read_data_from_file_lines("fraction_r115.txt"),
+    ]
     Fraction_R22, Fraction_R115 = fractions
-    IDs = ['r-22', 'chloropentafluoroethane', 'water']
+    IDs = ["r-22", "chloropentafluoroethane", "water"]
 
     # Молярная масса хладагента R-22
     r22 = Chemical(IDs[0])
@@ -118,7 +132,11 @@ def create_frac_calc() -> FlashCalculator:
     omega = calculate_acentrick_factor(T_oil, P_oil, M_oil)
 
     # Расчет мольных долей для каждого экспериментального компонента системы
-    mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(
+    (
+        mole_fractions_r22,
+        mole_fractions_r115,
+        mole_fractions_oil,
+    ) = mass_fractions_to_mole_fractions(
         Fraction_R22, Fraction_R115, M_r22, M_r115, M_oil
     )
 
@@ -134,26 +152,29 @@ def create_frac_calc() -> FlashCalculator:
     # ================= Оптимизация коэффициентов =================
     # Оптимизируемые коэффициенты для R-22 и R-115
     initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
-    flash_calculator = FlashCalculator(SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23, zs_mole, t_min)
-    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115],
-                                                  T, P, zs_mole)
+    flash_calculator = FlashCalculator(
+        SRKMIX, oil_SRKMIX, chemical_constants_SR, initial_guess_k13_k23, zs_mole, t_min
+    )
+    result = flash_calculator.optimize_parameters(
+        initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115], T, P, zs_mole
+    )
     if result.success:
         return flash_calculator
     else:
-        raise Exception('Error while optimizing parameters of flash calculator')
+        raise Exception("Error while optimizing parameters of flash calculator")
 
 
-def load_from_directory(dir_path: str, column: int) -> dict[float:dict[float:float]]:
+def load_from_directory(dir_path: str, column: int) -> dict[float : dict[float:float]]:
     result = {}
     file_path = os.path.join(os.path.dirname(__file__), dir_path)
     for file in os.listdir(file_path):
-        with open(file_path + f'\\{file}', "r") as f:
+        with open(file_path + f"\\{file}", "r") as f:
             text = f.read()
             # Считываем давление из имени
             p = float(file[:-4])
             result[p] = {}
-            for line in text.split('\n'):
-                cur_line = line.split(' ')
+            for line in text.split("\n"):
+                cur_line = line.split(" ")
                 # Забираем значение из искомой колонки
                 t = float(cur_line[0])
                 val = float(cur_line[column])
@@ -192,7 +213,7 @@ class ViscData:
 
 
 def aad(x_exp, x_calc):
-    assert (len(x_exp) == len(x_calc))
+    assert len(x_exp) == len(x_calc)
     returnable = 0
     for i in range(len(x_exp)):
         returnable += abs((x_exp[i] - x_calc[i]) / x_exp[i])
@@ -200,10 +221,17 @@ def aad(x_exp, x_calc):
     return returnable
 
 
-def aad_new(params: list[float], func: callable, points: list, exp: list[float],
-            static_params: list[float] = None) -> float:
+def aad_new(
+    params: list[float],
+    func: callable,
+    points: list,
+    exp: list[float],
+    static_params: list[float] = None,
+) -> float:
     if len(points) != len(exp):
-        raise ValueError(f"Input lists have different shapes: {len(points)} and {len(exp)}")
+        raise ValueError(
+            f"Input lists have different shapes: {len(points)} and {len(exp)}"
+        )
     result = 0
     calc = []
     for i in range(len(points)):
