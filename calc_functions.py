@@ -31,7 +31,10 @@ def refutas(point: list[float], static_params: list[float]) -> float:
 
 
 def arrhenius(point: list[Point]) -> float:
-    return exp(sum([i.x * log(i.mu) for i in point]))
+    try:
+        return exp(sum([i.x * log(i.v) for i in point]))
+    except TypeError:
+        pass
 
 
 def kendall_monroe(point: list[Point]) -> float:
@@ -52,10 +55,10 @@ def grunberg_nissan(params: list[float], point: list[Point]):
 
 
 # params = alpha, point = [mu1, mu2, x1, x2]
-def lederer_roegiers(params: float, point: list[Point]) -> float:
+def lederer_roegiers(params: list[float], point: list[Point]) -> float:
     return exp(
-        (point[0].x * log(point[0].mu) + params * point[1].x * log(point[1].mu))
-        / (point[0].x + params * point[1].x)
+        (point[0].x * log(point[0].mu) + params[0] * point[1].x * log(point[1].mu))
+        / (point[0].x + params[0] * point[1].x)
     )
 
 

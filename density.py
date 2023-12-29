@@ -21,7 +21,8 @@ class Density:
     def calc_rho_p(self, p: float) -> float:
         return rho_p(self.beta, [self.rho0, self.p0], p)
 
-    def calc_rho_full(self, t: float, p: float) -> float:
+    def calc_rho_full(self, point: Point) -> float:
+        p, t = point.p, point.t
         if p is not None and t is not None:
             return rho_full([self.e, self.beta], [self.rho0, self.p0, self.t0], [p, t])
         if p is not None:
@@ -37,7 +38,7 @@ class Density:
         temps = [i.t for i in points]
         rho = [i.rho for i in points]
         args = (rho_t, temps, rho, [self.point0.rho, self.point0.t])
-        result = minimize(fun=aad_new, x0=0, method='Powell', args=args)
+        result = minimize(fun=aad_new, x0=0, method="Powell", args=args)
         self.beta = result.x[0]
         print(result.message)
         return result.success
@@ -51,8 +52,13 @@ class Density:
     def setup_rho_full(self, rho, points) -> bool:
         static_params = (self.point0.rho, self.point0.p, self.point0.t)
         args = (rho_full, points, rho, static_params)
-        result = minimize(fun=aad_new, method='Nelder-Mead', x0=[3, 0], args=args,
-                          options={'maxiter': 100000, 'maxfev': 100000})
+        result = minimize(
+            fun=aad_new,
+            method="Nelder-Mead",
+            x0=[3, 0],
+            args=args,
+            options={"maxiter": 100000, "maxfev": 100000},
+        )
         self.e, self.beta = result.x
         print(result.message)
         return result.success
@@ -67,14 +73,21 @@ class DensityParedes:
         t = list(rho_pref.keys())
         rho = list(rho_pref.values())
         args = (rho_paredes_t, t, rho)
-        minimized = minimize(fun=aad_new, method='Nelder-Mead', x0=[354, -7, 0], args=args,
-                             options={'maxiter': 100000, 'maxfev': 100000})
+        minimized = minimize(
+            fun=aad_new,
+            method="Nelder-Mead",
+            x0=[354, -7, 0],
+            args=args,
+            options={"maxiter": 100000, "maxfev": 100000},
+        )
         print(minimized.message)
-        print(f'AAD_t = {aad_new(minimized.x, rho_paredes_t, t, rho)}')
+        print(f"AAD_t = {aad_new(minimized.x, rho_paredes_t, t, rho)}")
         self.params[:3] = minimized.x
         return minimized.success
 
-    def setup(self, rho_dict: dict[float:dict[float:float]], pref: float = None) -> bool:
+    def setup(
+        self, rho_dict: dict[float : dict[float:float]], pref: float = None
+    ) -> bool:
         p_list = list(rho_dict.keys())
         if pref is None:
             pref = p_list[int(len(p_list) / 2)]
@@ -89,10 +102,13 @@ class DensityParedes:
                 rho.append(rho_dict[i][j])
         args = (rho_paredes, points, rho, self.params[:3] + [pref])
         x0 = [0.08365, 452.16, -1.5087, 0.0014034]
-        minimized = minimize(fun=aad_new, x0=x0, args=args,
-                             options={'maxiter': 100000, 'maxfev': 100000})
+        minimized = minimize(
+            fun=aad_new, x0=x0, args=args, options={"maxiter": 100000, "maxfev": 100000}
+        )
         print(minimized.message)
-        print(f'AAD = {aad_new(minimized.x, rho_paredes, points, rho, self.params[:3] + [pref])}')
+        print(
+            f"AAD = {aad_new(minimized.x, rho_paredes, points, rho, self.params[:3] + [pref])}"
+        )
         self.params[3:] = minimized.x
         return minimized.success
 
@@ -110,21 +126,31 @@ def rho_test():
     graph_p = 0.04
     density_calc = Density(point0)
     if not density_calc.setup_rho_full(rho, points):
-        print('Error while optimizing')
-    print(f'rho0 = {density_calc.point0.rho}\nt0 = {density_calc.point0.t}\np0 = {density_calc.point0.p}')
+        print("Error while optimizing")
+    print(
+        f"rho0 = {density_calc.point0.rho}\nt0 = {density_calc.point0.t}\np0 = {density_calc.point0.p}"
+    )
     print("Beta = %f" % density_calc.beta)
     print("E = %f" % density_calc.e)
-    static_params = (density_calc.point0.rho, density_calc.point0.p, density_calc.point0.t)
+    static_params = (
+        density_calc.point0.rho,
+        density_calc.point0.p,
+        density_calc.point0.t,
+    )
     t_arr = [i.t for i in substance_data.get_by_pressure(graph_p)]
     rho_arr = [i.rho for i in substance_data.get_by_pressure(graph_p)]
     t_calc = arange(min(t_arr), max(t_arr) + 0.1, 0.1)
-    print(f'AAD = {aad_new([3, 0], rho_full, points, rho, static_params)}%')
-    font = {'family': 'Times New Roman', 'size': 20}
-    matplotlib.rc('font', **font)
+    print(f"AAD = {aad_new([3, 0], rho_full, points, rho, static_params)}%")
+    font = {"family": "Times New Roman", "size": 20}
+    matplotlib.rc("font", **font)
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
-    ax.plot(t_calc, [density_calc.calc_rho_full(Point(t=i, p=point0.p)) for i in t_calc], "r",
-            label="Расчётные значения")
+    ax.plot(
+        t_calc,
+        [density_calc.calc_rho_full(Point(t=i, p=point0.p)) for i in t_calc],
+        "r",
+        label="Расчётные значения",
+    )
     ax.set_ylabel("ρ, кг/м³")
     ax.set_xlabel("T, °C")
     plt.grid()
@@ -140,7 +166,9 @@ def rho_oil_tait():
     rho_calc.setup_t({t_arr[i]: rho_arr[i] for i in range(len(t_arr))})
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
-    ax.plot(t_calc, [rho_calc.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
+    ax.plot(
+        t_calc, [rho_calc.calc_t(i) for i in t_calc], "r", label="Расчётные значения"
+    )
     ax.set_ylabel("ρ, кг/м³")
     ax.set_xlabel("P, МПа")
     plt.legend()
@@ -149,18 +177,34 @@ def rho_oil_tait():
 
 def rho_oil():
     t_arr = [-25, 0, 25, 50, 75, 100, 125]
-    rho_arr = [i * 10 ** 3 for i in [0.935, 0.910277, 0.888055, 0.86833, 0.847776, 0.828056, 0.807502]]
+    rho_arr = [
+        i * 10**3
+        for i in [0.935, 0.910277, 0.888055, 0.86833, 0.847776, 0.828056, 0.807502]
+    ]
     point_list = [Point(t=t_arr[i], rho=rho_arr[i]) for i in range(len(t_arr))]
     t_calc = arange(t_arr[0], t_arr[-1] + 0.1, 0.1)
     rho_calc = Density(point_list[4])
     rho_calc.setup_rho_t(point_list, 4)
     print(rho_calc.beta)
-    print(aad_new(rho_calc.beta, rho_t, t_arr, rho_arr, [rho_calc.point0.rho, rho_calc.point0.t]))
-    font = {'family': 'Times New Roman', 'size': 20}
-    matplotlib.rc('font', **font)
+    print(
+        aad_new(
+            rho_calc.beta,
+            rho_t,
+            t_arr,
+            rho_arr,
+            [rho_calc.point0.rho, rho_calc.point0.t],
+        )
+    )
+    font = {"family": "Times New Roman", "size": 20}
+    matplotlib.rc("font", **font)
     fig, ax = plt.subplots()
     ax.scatter(t_arr, rho_arr, label="Экспериментальные данные")
-    ax.plot(t_calc, [rho_calc.calc_rho_t(i) for i in t_calc], "r", label="Расчётные значения")
+    ax.plot(
+        t_calc,
+        [rho_calc.calc_rho_t(i) for i in t_calc],
+        "r",
+        label="Расчётные значения",
+    )
     ax.set_ylabel("ρ, кг/м³")
     plt.grid()
     ax.set_xlabel("T, °C")
@@ -182,7 +226,7 @@ def rho_paredes_test():
 
     test = DensityParedes(pref)
     if not test.setup(density_dict, pref):
-        raise Exception('Error while optimizing')
+        raise Exception("Error while optimizing")
 
     pcalc = 0.06
     fig, ax = plt.subplots(1, 1)
@@ -190,12 +234,12 @@ def rho_paredes_test():
     rho_exp = list(density_dict[pcalc].values())
     t_calc = arange(t_exp[0], t_exp[-1] + 0.1, 0.1)
 
-    font = {'family': 'Times New Roman', 'size': 10.5}
-    matplotlib.rc('font', **font)
+    font = {"family": "Times New Roman", "size": 10.5}
+    matplotlib.rc("font", **font)
     ax.plot(t_calc, [test.calc_t(i) for i in t_calc], "r", label="Расчётные значения")
     ax.scatter(t_exp, rho_exp, label="Экспериментальные данные")
     ax.set_ylabel("$\it{ρ, кг/м³}$")
-    ax.set_xlabel('$\it{T, °C}$')
+    ax.set_xlabel("$\it{T, °C}$")
     plt.legend()
     plt.show()
 

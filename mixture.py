@@ -58,11 +58,11 @@ class Mixture:
             ]
         return result
 
-    def minimize_params(self, default_params, points: list[list[float]]) -> bool:
+    def minimize_params(self, default_params, points: list[Point]) -> bool:
         params = [default_params.copy()] * (len(self.components) - 1)
         args = (
             self.calc_mixture_props,
-            [[point[0], point[1]] for point in points],
+            points,
             [point[-1] for point in points],
         )
         result_minimized = minimize(
