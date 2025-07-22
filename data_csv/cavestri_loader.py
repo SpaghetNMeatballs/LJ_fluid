@@ -1,4 +1,5 @@
 import csv
+import os
 
 
 class DataManager:
@@ -22,7 +23,9 @@ class DataManager:
 
 def get_data() -> DataManager:
     result = DataManager()
-    with open('cavestri_data.csv', newline='') as csvfile:
+    module_dir = os.path.dirname(__file__)
+    file_path = os.path.join(module_dir, 'cavestri_data.csv')
+    with open(file_path, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=';')
         for row in reader:
             float_row = [float(i) for i in row]

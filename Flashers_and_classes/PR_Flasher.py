@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib as mpl
 import numpy as np
+import csv
 from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVL
 from thermo.interaction_parameters import IPDB
 from scipy.optimize import minimize
@@ -112,6 +113,39 @@ initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
 result = minimize(func_opt, initial_guess_k13_k23, bounds=((-1, 1), (0, 0.004), (-1, 1), (0, 0.004), (-1, 1), (0, 0.004)))
 if result.success:
     print(result.message)
+    with open('flash_results_dataset.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['T_C', 'P_bar', 'mu_cP', 'rho_g_per_ml', 'x_R22', 'x_R115', 'x_oil'])
+
+        for i in range(len(T)):
+            for j in range(len(P_bar[i])):
+                k13 = result.x[0] + (T[i] - T[0]) * result.x[1]
+                k23 = result.x[2] + (T[i] - T[0]) * result.x[3]
+                k12 = result.x[4] + (T[i] - T[0]) * result.x[5]
+
+                kijs = [[0, k12, k13],
+                        [k12, 0, k23],
+                        [k13, k23, 0]]
+
+                eos_kwargs = {'Pcs': constants2.Pcs, 'Tcs': constants2.Tcs, 'omegas': constants2.omegas, 'kijs': kijs}
+                gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs)
+                liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs)
+                flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
+
+                PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * 1e5, zs=zs)
+
+                if PT.VF != 1:
+                    x_R22, x_R115, x_oil = PT.liquid0.zs
+                else:
+                    x_R22, x_R115, x_oil = 0.0, 0.0, 0.0
+
+                writer.writerow([
+                    T[i],  # Температура, °C
+                    P_bar[i][j],  # Давление, Бар
+                    Viscosity[i][j],  # Вязкость, cP
+                    Density[i][j],  # Плотность, г/мл
+                    x_R22, x_R115, x_oil  # Мольные доли
+                ])
 else:
     raise ValueError(result.message)
 
