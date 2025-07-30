@@ -1,185 +1,158 @@
-# Задача. Предсказывание состава жидкой фазы смеси.
-# Входные параметры: Температура C, давление Бар (МПа/10) для каждой точки, вязкость cP, плотность г/мл и состав газа
-# R-22/R-115 (48.8/51.2) ------> (0.488/0.512)
-# Построить зависимость концентрации от давления
-
 import matplotlib.pyplot as plt
 from thermo import PRMIX
+from thermo.chemical import Chemical
 from Flashers_and_classes.classes import FlashCalculator, create_constants_package, Oil
 from functions.chemical_functions import mass_fractions_to_mole_fractions, calculate_acentrick_factor
 from functions.read_func import read_data_from_file_lines
-from thermo.chemical import Chemical
 import openpyxl
+import csv
 
-if __name__ == "__main__":
 
-    # Соотношение R-22 к R-115
-    # Общее соотношения газа к маслу с учетом распределительного коэффициента
-    g = 0.7
-    zs = [0.488 * g, 0.512 * g, 1 - g]  # R-22, R-115, ISO 32
-    T = read_data_from_file_lines('temperature.txt')
-    t_min = T[0]  # начальная температура для оптимизации
-    P = read_data_from_file_lines('pressure.txt')
-    fractions = [read_data_from_file_lines('fraction_r22.txt'), read_data_from_file_lines('fraction_r115.txt')]
-    Fraction_R22, Fraction_R115 = fractions
-    print(Fraction_R22)
-    IDs = ['r-22', 'chloropentafluoroethane', 'water']
+def get_chemical_molar_masses(components):
+    return {name: round(Chemical(name).MW, 2) for name in components}
 
-    # Молярная масса хладагента R-22
-    r22 = Chemical(IDs[0])
-    M_r22 = round(r22.MW, 2)  #86.47
 
-    # Молярная масса хладагента R-115
-    r115 = Chemical(IDs[1])
-    M_r115 = round(r115.MW, 2)  #154.47
+def prepare_experimental_data():
+    temperature = read_data_from_file_lines('temperature.txt')
+    pressure = read_data_from_file_lines('pressure.txt')
+    r22_fractions = read_data_from_file_lines('fraction_r22.txt')
+    r115_fractions = read_data_from_file_lines('fraction_r115.txt')
 
-    # Критические параметры масла:
-    M_oil = 400.0  # Молярная масса масла
-    T_oil = 800  # Кельвины
-    P_oil = 950e3  # Па
-    # Расчет ацентрического фактора по корреляции Ли и Кесслера
+    return temperature, pressure, {
+        'R-22': r22_fractions,
+        'R-115': r115_fractions
+    }
+
+
+def compute_mole_fractions(fractions, molar_masses, molar_mass_oil):
+    return mass_fractions_to_mole_fractions(fractions, molar_masses, molar_mass_oil)
+
+
+def build_flash_calculator(zs, t_min, molar_mass_oil, omega, ids):
+    oil = Oil(molar_mass_oil, 800, 950e3, omega, 'ISO32')
+    constants = create_constants_package(oil, ids)
+    initial_k = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
+    return FlashCalculator(PRMIX, oil, constants, initial_k, zs, t_min), initial_k
+
+
+def write_headers(sheet):
+    sheet.append([
+        'Т(°C)', 'P(кПа)', 'x_R-22(модел.)', 'х_R-115(модел.)', 'х_ISO 32(модел.)',
+        'x_R-22(эксп.)', 'x_R-115(эксп.)', 'x_ISO 32(эксп.)',
+        'Aбс.ошибка R-22', 'Абс.ошибка R-115'
+    ])
+
+
+def process_flash_results(flash_calculator, T, P, mole_fractions_exp, zs_mole, sheet):
+    total_points, total_error_r22, total_error_r115 = 0, 0, 0
+
+    for i, temp in enumerate(T):
+        r22_model, r115_model, r22_exp, r115_exp, p_plot = [], [], [], [], []
+
+        error_r22_T, error_r115_T = 0, 0
+
+        for j, pressure in enumerate(P[i]):
+            flash_data = flash_calculator.calculate_flash(temp, pressure)
+
+            if flash_data[3] == 1:
+                flash_data[0][0] = 0.0
+                flash_data[0][1] = 0.0
+
+            abs_err_r22 = abs(mole_fractions_exp['R-22'][i][j] - flash_data[0][0])
+            abs_err_r115 = abs(mole_fractions_exp['R-115'][i][j] - flash_data[0][1])
+
+            sheet.append([
+                temp, pressure, flash_data[0][0], flash_data[0][1], flash_data[0][2],
+                mole_fractions_exp['R-22'][i][j], mole_fractions_exp['R-115'][i][j],
+                mole_fractions_exp['Oil'][i][j], abs_err_r22, abs_err_r115
+            ])
+
+            r22_model.append(flash_data[0][0])
+            r115_model.append(flash_data[0][1])
+            r22_exp.append(mole_fractions_exp['R-22'][i][j])
+            r115_exp.append(mole_fractions_exp['R-115'][i][j])
+            p_plot.append(pressure)
+
+            error_r22_T += abs_err_r22
+            error_r115_T += abs_err_r115
+            total_error_r22 += abs_err_r22
+            total_error_r115 += abs_err_r115
+            total_points += 1
+
+        plot_results(temp, p_plot, r22_model, r115_model, r22_exp, r115_exp)
+
+    avg_r22 = total_error_r22 / total_points
+    avg_r115 = total_error_r115 / total_points
+
+    print(f'\n****** Средняя погрешность ******')
+    print(f'R-22: {avg_r22:.5f} ({avg_r22 * 100:.2f}%)')
+    print(f'R-115: {avg_r115:.5f} ({avg_r115 * 100:.2f}%)')
+
+    return sheet
+
+
+def plot_results(temp, pressures, r22_model, r115_model, r22_exp, r115_exp):
+    plt.title(f'Зависимость x от P при T={temp}°C', fontsize=16)
+    plt.xlabel('P, бар', fontsize=14)
+    plt.ylabel('x, мольн. доля', fontsize=14)
+
+    plt.scatter(pressures, r22_model)
+    plt.scatter(pressures, r115_model)
+    plt.scatter(pressures, r22_exp)
+    plt.scatter(pressures, r115_exp)
+
+    plt.plot(pressures, r22_model)
+    plt.plot(pressures, r115_model)
+
+    plt.legend(['R-22 модел.', 'R-115 модел.', 'R-22 эксп.', 'R-115 эксп.'])
+    plt.grid(True)
+    plt.show()
+
+
+def export_to_csv(sheet, filepath):
+    with open(filepath, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            'T_C', 'P_bar', 'x_R22', 'x_R115', 'x_ISO32',
+            'x_R22_exp', 'x_R115_exp', 'x_ISO32_exp', 'ABS_err_R22', 'ABS_err_R115'
+        ])
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            writer.writerow(row)
+
+
+def main():
+    # Исходные данные
+    gas_mass_ratio = 0.7
+    zs_mass = [0.488 * gas_mass_ratio, 0.512 * gas_mass_ratio, 1 - gas_mass_ratio]
+    ids = ['r-22', 'chloropentafluoroethane', 'water']
+    M_oil, T_oil, P_oil = 400.0, 800, 950e3
+
+    # Чтение и преобразование данных
+    T, P, exp_mass_fractions = prepare_experimental_data()
+    t_min = T[0]
+
+    molar_masses = get_chemical_molar_masses(ids[:2])
+    molar_masses_dict = {'R-22': molar_masses[ids[0]], 'R-115': molar_masses[ids[1]]}
+    mole_fractions_exp = compute_mole_fractions(exp_mass_fractions, molar_masses_dict, M_oil)
+
+    zs_mass_dict = {
+        'R-22': [[zs_mass[0]]],
+        'R-115': [[zs_mass[1]]]
+    }
+    zs_mole = compute_mole_fractions(zs_mass_dict, molar_masses_dict, M_oil)
+    zs_mole_values = [zs_mole['R-22'][0][0], zs_mole['R-115'][0][0], zs_mole['Oil'][0][0]]
+
     omega = calculate_acentrick_factor(T_oil, P_oil, M_oil)
-
-    # Расчет мольных долей для каждого экспериментального компонента системы
-    mole_fractions_r22, mole_fractions_r115, mole_fractions_oil = mass_fractions_to_mole_fractions(
-        Fraction_R22, Fraction_R115, M_r22, M_r115, M_oil
-    )
-    print(mole_fractions_r22)
-
-    # Расчет мольных долей для каждого компонента системы реализуемой программы
-    zs_r22_mole, zs_r115_mole, zs_oil_mole = mass_fractions_to_mole_fractions(
-        [[zs[0]]], [[zs[1]]], M_r22, M_r115, M_oil
-    )
-    zs_mole = [zs_r22_mole[0][0], zs_r115_mole[0][0], zs_oil_mole[0][0]]
-    print(zs_mole)
-
-    oil_PRMIX = Oil(M_oil, T_oil, P_oil, omega)
-    chemical_constants_PR = create_constants_package(oil_PRMIX, IDs)
-
-    # ================= Оптимизация коэффициентов =================
-    # Оптимизируемые коэффициенты для R-22 и R-115
-    initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
-    flash_calculator = FlashCalculator(PRMIX, oil_PRMIX, chemical_constants_PR, initial_guess_k13_k23, zs_mole, t_min)
-    result = flash_calculator.optimize_parameters(initial_guess_k13_k23, [mole_fractions_r22, mole_fractions_r115],
-                                                  T, P, zs_mole)
-
-    # Счетчик точек и суммы концентраций
-    count = 0
-    sum_R22 = 0
-    sum_R115 = 0
+    flash_calculator, initial_guess = build_flash_calculator(zs_mole_values, t_min, M_oil, omega, ids)
+    flash_calculator.optimize_parameters(initial_guess, mole_fractions_exp, T, P, zs_mole_values)
 
     workbook = openpyxl.Workbook()
     sheet = workbook.active
+    write_headers(sheet)
 
-    # Записываем заголовки в файл Excel
-    sheet.append(
-        ['Т(°C)', 'P(кПа)', 'x_R-22(модел.)', 'х_R-115(модел.)', 'х_ISO 32(модел.)', 'x_R-22(эксп.)', 'x_R-115(эксп.)',
-         'x_ISO 32(эксп.)',
-         'Aбс.ошибка R-22', 'Абс.ошибка R-115'])
+    process_flash_results(flash_calculator, T, P, mole_fractions_exp, zs_mole_values, sheet)
+    export_to_csv(sheet, "..\\flasher_data\\flash_results_dataset.csv")
 
-    # Цикл расчета вспышки и ошибок
-    for i in range(len(T)):
-        countT = 0
-        sum_R22T = 0
-        sum_R115T = 0
-        # Массивы данных концентраций газов, давления
-        R22_plot = []
-        R115_plot = []
-        P_bar_plot = []
-        Fraction_R22_plot = []
-        Fraction_R115_plot = []
-        for j in range(len(P[i])):
-            # Вызов функции для получения мольных долей, температуры и давления
-            flash_data = flash_calculator.calculate_flash(T[i], P[i][j])
-            if flash_data[3] == 1:
-                print('================ПРИСУТСТВУЕТ ТОЛЬКО ПАР================')
-                print('Температура расчета:', T[i], '°C\n')
-                print('Давление расчета:', P[i][j], 'Бар\n')
-                print('Соотношение компонентов смеси в газе R-22, R-115, ISO 32:\n', flash_data[0], '\n')
-                print('Пар:', flash_data[3], '\n')
-                # Обнуляем наши значения долей, если присутствует только пар
-                flash_data[0][0] = 0.0
-                flash_data[0][1] = 0.0
-            else:
-                print('================================================================================')
-                print('Температура расчета:', T[i], '°C\n')
-                print('Давление расчета:', P[i][j], 'Бар\n')
-                print('Соотношение компонентов смеси R-22, R-115, ISO 32:\n', flash_data[0], '\n')
-                print('Пар:', flash_data[3], '\n')
 
-            # Добавление точек в листы
-            R22_plot.append(flash_data[0][0])
-            R115_plot.append(flash_data[0][1])
-            P_bar_plot.append(P[i][j])
-            # Экспериментальные (исходные) данные
-            Fraction_R22_plot.append(mole_fractions_r22[i][j])
-            Fraction_R115_plot.append(mole_fractions_r115[i][j])
-
-            # Абсолютные ошибки
-            ABS_error_R22 = abs(mole_fractions_r22[i][j] - flash_data[0][0])
-            ABS_error_R115 = abs(mole_fractions_r115[i][j] - flash_data[0][1])
-
-            # Относительные ошибки
-            Rel_error_R22 = ABS_error_R22 / mole_fractions_r22[i][j]
-            Rel_error_R115 = ABS_error_R115 / mole_fractions_r115[i][j]
-
-            # Счетчик точек
-            count += 1
-            countT += 1
-            sum_R22T += ABS_error_R22
-            sum_R115T += ABS_error_R115
-
-            sum_R22 += ABS_error_R22
-            sum_R115 += ABS_error_R115
-
-            print('****** Абсолютная погрешность ******\n')
-            print('Погрешность для R-22:', ABS_error_R22, '\n')
-            print('Погрешность для R-115:', ABS_error_R115, '\n')
-            print('****** Относительная погрешность ******\n')
-            print('Погрешность для R-22:', Rel_error_R22, '\n')
-            print('Погрешность для R-115:', Rel_error_R115, '\n')
-
-            # Добавляем данные в файл Excel
-            sheet.append([
-                T[i],
-                P[i][j],
-                float(flash_data[0][0]),
-                float(flash_data[0][1]),
-                float(flash_data[0][2]),
-                mole_fractions_r22[i][j], mole_fractions_r115[i][j], mole_fractions_oil[i][j],
-                float(ABS_error_R22), float(ABS_error_R115)
-            ])
-
-        print('****** Значения kijs ******')
-        print('k12=', flash_data[4], '\n')
-        print('k13=', flash_data[5], '\n')
-        print('k23=', flash_data[6], '\n')
-
-        # Средняя ошибка для каждой температуры
-        Avg_error_R22T = sum_R22T / countT
-        Avg_error_R115T = sum_R115T / countT
-
-        # Построение графика
-        plt.title('График зависимости x от P при Т=' + str(T[i]) + '°C', fontsize=18,
-                  fontname='Times New Roman')
-        plt.xlabel('P, бар', fontsize=18)
-        plt.ylabel('x, мольн. доля', fontsize=18)
-        plt.scatter(P_bar_plot, R22_plot)
-        plt.scatter(P_bar_plot, R115_plot)
-        plt.scatter(P_bar_plot, Fraction_R22_plot)
-        plt.scatter(P_bar_plot, Fraction_R115_plot)
-        plt.plot(P_bar_plot, R22_plot)
-        plt.plot(P_bar_plot, R115_plot)
-        plt.legend(['R-22 модел.', 'R-115 модел.', 'R-22 эксп.', 'R-115 эксп.'])
-        plt.show()
-
-    # Средняя ошибка общая
-    Avg_error_R22 = sum_R22 / count
-    Avg_error_R115 = sum_R115 / count
-
-    print('****** Средняя погрешность ******')
-    print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22 * 100, 2), '%', '\n')
-    print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115 * 100, 2), '%', '\n')
-
-# Сохраняем файл Excel
-workbook.save("result_PR.xlsx")
+if __name__ == "__main__":
+    main()
