@@ -161,8 +161,8 @@ for i in range(len(T)):
             ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
 
             # Относительные ошибки
-            Rel_error_R22 = ABS_error_R22/PT.liquid0.zs[0]
-            Rel_error_R115 = ABS_error_R115 / PT.liquid0.zs[1]
+            Rel_error_R22 = ABS_error_R22/Fraction_R22[i][j]
+            Rel_error_R115 = ABS_error_R115 /Fraction_R115[i][j]
 
             # Счетчик точек
             count += 1
